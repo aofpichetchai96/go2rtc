@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - go2rtc</title>
+    <!-- We don't load main.js here to prevent standard navigation rendering -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent: #00d9b5;
+            --accent-hover: #00b396;
+            --border-color: #30363d;
+            --danger: #f85149;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at top right, rgba(0, 217, 181, 0.05), transparent 40%),
+                radial-gradient(circle at bottom left, rgba(0, 217, 181, 0.02), transparent 40%);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .login-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 3rem;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            animation: formAppear 0.5s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 4px;
+            background: linear-gradient(90deg, var(--accent), #007663);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+            text-align: center;
+        }
+
+        p.subtitle {
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 2.5rem;
+            font-size: 0.95rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .input-with-icon {
+            position: relative;
+        }
+
+        .input-with-icon i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            width: 18px;
+            height: 18px;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.85rem 1rem 0.85rem 2.8rem;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0, 217, 181, 0.1);
+            background: rgba(0,0,0,0.4);
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        button:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 217, 181, 0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .error-msg {
+            color: var(--danger);
+            background: rgba(248, 81, 73, 0.1);
+            border: 1px solid rgba(248, 81, 73, 0.2);
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+
+        @keyframes formAppear {
+            from { opacity: 0; transform: translateY(20px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <h1>go2rtc</h1>
+        <p class="subtitle">Enter your credentials to access the dashboard</p>
+
+        <div id="error-container" class="error-msg"></div>
+
+        <form id="login-form">
+            <div class="form-group">
+                <div class="input-wrapper">
+                    <label>Username</label>
+                    <div class="input-with-icon">
+                        <i data-lucide="user"></i>
+                        <input type="text" id="username" name="username" placeholder="admin" required autocomplete="username" autofocus>
+                    </div>
+                </div>
+                <div class="input-wrapper">
+                    <label>Password</label>
+                    <div class="input-with-icon">
+                        <i data-lucide="lock"></i>
+                        <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password">
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit">
+                <span>Sign In</span>
+                <i data-lucide="arrow-right" style="width: 18px;"></i>
+            </button>
+        </form>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        document.getElementById('login-form').addEventListener('submit', async (ev) => {
+            ev.preventDefault();
+            const btn = ev.target.querySelector('button');
+            const errDiv = document.getElementById('error-container');
+            
+            btn.innerHTML = '<span class="loader"></span> Signing in...';
+            btn.style.opacity = '0.8';
+            btn.disabled = true;
+            errDiv.style.display = 'none';
+
+            const formData = new URLSearchParams();
+            formData.append('username', document.getElementById('username').value);
+            formData.append('password', document.getElementById('password').value);
+
+            try {
+                const r = await fetch('api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData.toString()
+                });
+
+                if (r.ok) {
+                    const data = await r.json();
+                    if (data.status === 'ok') {
+                        // Redirect to destination or index
+                        const params = new URLSearchParams(window.location.search);
+                        window.location.href = params.get('redirect') || '/';
+                        return; // do not restore button
+                    }
+                }
+                
+                errDiv.innerText = 'Invalid username or password';
+                errDiv.style.display = 'block';
+            } catch (e) {
+                errDiv.innerText = 'Connection error';
+                errDiv.style.display = 'block';
+            }
+
+            btn.innerHTML = '<span>Sign In</span><i data-lucide="arrow-right" style="width: 18px;"></i>';
+            lucide.createIcons();
+            btn.style.opacity = '1';
+            btn.disabled = false;
+        });
+    </script>
+</body>
+</html>

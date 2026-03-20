@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"slices"
 	"strconv"
@@ -15,7 +16,10 @@ import (
 	"time"
 
 	"github.com/AlexxIT/go2rtc/internal/app"
+	"github.com/AlexxIT/go2rtc/internal/auth"
+	"github.com/AlexxIT/go2rtc/internal/db"
 	"github.com/rs/zerolog"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func Init() {
@@ -33,7 +37,8 @@ func Init() {
 			TLSKey     string `yaml:"tls_key"`
 			UnixListen string `yaml:"unix_listen"`
 
-			AllowPaths []string `yaml:"allow_paths"`
+			AllowPaths    []string `yaml:"allow_paths"`
+			StreamOrigins []string `yaml:"stream_origins"`
 		} `yaml:"api"`
 	}
 
@@ -49,11 +54,16 @@ func Init() {
 
 	allowPaths = cfg.Mod.AllowPaths
 	basePath = cfg.Mod.BasePath
+	streamOrigins = cfg.Mod.StreamOrigins
 	log = app.GetLogger("api")
 
 	initStatic(cfg.Mod.StaticDir)
 
 	HandleFunc("api", apiHandler)
+	HandleFunc("api/login", apiLogin)
+	HandleFunc("api/logout", apiLogout)
+	HandleFunc("api/users", apiUsers)
+	HandleFunc("api/origins", apiOrigins)
 	HandleFunc("api/config", configHandler)
 	HandleFunc("api/exit", exitHandler)
 	HandleFunc("api/restart", restartHandler)
@@ -65,9 +75,8 @@ func Init() {
 		Handler = middlewareCORS(Handler) // 3rd
 	}
 
-	if cfg.Mod.Username != "" {
-		Handler = middlewareAuth(cfg.Mod.Username, cfg.Mod.Password, cfg.Mod.LocalAuth, Handler) // 2nd
-	}
+	// Always apply Auth middleware since we use the database now
+	Handler = middlewareAuth(cfg.Mod.LocalAuth, Handler) // 2nd
 
 	if log.Trace().Enabled() {
 		Handler = middlewareLog(Handler) // 1st
@@ -196,7 +205,32 @@ const StreamNotFound = "stream not found"
 
 var allowPaths []string
 var basePath string
+var streamOrigins []string
 var log zerolog.Logger
+
+// AllowedOrigin returns the value to set for the Access-Control-Allow-Origin header
+// based on the configured stream_origins whitelist and the SQLite origins table.
+func AllowedOrigin(r *http.Request) string {
+	origin := r.Header.Get("Origin")
+	if origin == "" {
+		// Same-origin requests (no Origin header) are always allowed
+		return ""
+	}
+
+	// 1. Check global YAML origins
+	for _, o := range streamOrigins {
+		if o == "*" || o == origin {
+			return o
+		}
+	}
+
+	// 2. Check global origins from DB
+	if allowed, _ := db.CheckOrigin(origin); allowed {
+		return origin
+	}
+
+	return ""
+}
 
 func middlewareLog(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -209,15 +243,82 @@ func isLoopback(remoteAddr string) bool {
 	return strings.HasPrefix(remoteAddr, "127.") || strings.HasPrefix(remoteAddr, "[::1]") || remoteAddr == "@"
 }
 
-func middlewareAuth(username, password string, localAuth bool, next http.Handler) http.Handler {
+func extractOrigin(rawURL string) string {
+	if rawURL == "" {
+		return ""
+	}
+	u, err := url.Parse(rawURL)
+	if err != nil || u.Scheme == "" || u.Host == "" {
+		return ""
+	}
+	return u.Scheme + "://" + u.Host
+}
+
+func middlewareAuth(localAuth bool, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if localAuth || !isLoopback(r.RemoteAddr) {
+		path := r.URL.Path
+		// Allow static routes, assets, and internal login paths to bypass authentication
+		exempt := path == "/api/login" || path == "/api/logout" || path == "/login.html" || path == "/favicon.ico" || path == "/manifest.json" || strings.HasSuffix(path, ".js") || strings.HasPrefix(path, "/icons/")
+		publicStream := path == "/stream.html" || path == "/api/ws" || path == "/api/streams" || strings.HasPrefix(path, "/api/stream.")
+
+		if !exempt {
+			// 1. Check Session Token
+			token := auth.ExtractToken(r)
+			if token != "" {
+				if _, ok := auth.ValidateToken(token); ok {
+					next.ServeHTTP(w, r)
+					return
+				}
+			}
+
+			// 2. Check Basic Auth (for legacy or direct API integrations)
 			user, pass, ok := r.BasicAuth()
-			if !ok || user != username || pass != password {
-				w.Header().Set("Www-Authenticate", `Basic realm="go2rtc"`)
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			if ok && auth.CheckPassword(user, pass) {
+				next.ServeHTTP(w, r)
 				return
 			}
+
+			// If asking for a public stream but not logged in, enforce Origin checks
+			if publicStream && r.Method == "GET" {
+				origin := r.Header.Get("Origin")
+				if origin == "" {
+					origin = extractOrigin(r.Header.Get("Referer"))
+				}
+
+				ownHttp := extractOrigin("http://" + r.Host)
+				ownHttps := extractOrigin("https://" + r.Host)
+
+				// Allow if accessed directly, internal API call from same host, or if origin is in DB
+				if origin == "" || origin == ownHttp || origin == ownHttps {
+					next.ServeHTTP(w, r)
+					return
+				}
+
+				if allowed, _ := db.CheckOrigin(origin); allowed {
+					next.ServeHTTP(w, r)
+					return
+				}
+
+				for _, o := range streamOrigins {
+					if o == "*" || o == origin {
+						next.ServeHTTP(w, r)
+						return
+					}
+				}
+
+				http.Error(w, "Origin not allowed", http.StatusForbidden)
+				return
+			}
+
+			// Unauthorized
+			if strings.Contains(r.Header.Get("Accept"), "text/html") && r.Method == "GET" {
+				http.Redirect(w, r, "login.html", http.StatusFound)
+				return
+			}
+
+			w.Header().Set("Www-Authenticate", `Basic realm="go2rtc"`)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
 		}
 
 		next.ServeHTTP(w, r)
@@ -234,6 +335,150 @@ func middlewareCORS(next http.Handler) http.Handler {
 }
 
 var mu sync.Mutex
+
+func apiLogin(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	username := r.FormValue("username")
+	password := r.FormValue("password")
+
+	if auth.CheckPassword(username, password) {
+		token := auth.GenerateToken(username)
+
+		http.SetCookie(w, &http.Cookie{
+			Name:     "go2rtc_session",
+			Value:    token,
+			Path:     "/",
+			HttpOnly: true,
+			MaxAge:   86400, // 1 day
+			SameSite: http.SameSiteLaxMode,
+		})
+
+		ResponseJSON(w, map[string]string{"status": "ok", "token": token})
+		return
+	}
+
+	http.Error(w, "invalid username or password", http.StatusUnauthorized)
+}
+
+func apiLogout(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "go2rtc_session",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   -1,
+		Expires:  time.Unix(0, 0),
+	})
+
+	ResponseJSON(w, map[string]string{"status": "ok"})
+}
+
+func apiUsers(w http.ResponseWriter, r *http.Request) {
+	// Require full authentication for user management
+	// We check if the basic auth or cookie auth is an admin?
+	// For simplicity, any authenticated user can view/manage, OR we can restrict to role='admin'
+	// Since we haven't implemented roles fully into the session, we just trust the middleware here.
+
+	switch r.Method {
+	case "GET":
+		users, err := db.GetUsers()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		ResponseJSON(w, users)
+
+	case "POST":
+		username := r.FormValue("username")
+		password := r.FormValue("password")
+		if username == "" || password == "" {
+			http.Error(w, "username or password empty", http.StatusBadRequest)
+			return
+		}
+
+		hash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		if err := db.CreateUser(username, string(hash), "admin"); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		ResponseJSON(w, map[string]string{"status": "ok"})
+
+	case "DELETE":
+		username := r.URL.Query().Get("username")
+		if username == "" {
+			http.Error(w, "missing username", http.StatusBadRequest)
+			return
+		}
+		if username == "admin" {
+			http.Error(w, "cannot delete default admin", http.StatusBadRequest)
+			return
+		}
+
+		if err := db.DeleteUser(username); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		ResponseJSON(w, map[string]string{"status": "ok"})
+
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func apiOrigins(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "GET":
+		origins, err := db.GetOrigins()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		ResponseJSON(w, origins)
+
+	case "POST":
+		origin := r.FormValue("origin")
+		if origin == "" {
+			http.Error(w, "origin empty", http.StatusBadRequest)
+			return
+		}
+
+		if err := db.CreateOrigin(origin); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		ResponseJSON(w, map[string]string{"status": "ok"})
+
+	case "DELETE":
+		origin := r.URL.Query().Get("origin")
+		if origin == "" {
+			http.Error(w, "missing origin", http.StatusBadRequest)
+			return
+		}
+
+		if err := db.DeleteOrigin(origin); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		ResponseJSON(w, map[string]string{"status": "ok"})
+
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+}
 
 func apiHandler(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()

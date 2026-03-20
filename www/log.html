@@ -41,32 +41,68 @@
 <script src="main.js"></script>
 
 <main>
-    <div>
-        <button id="clean">Clean</button>
-        <button id="update">Auto Update: ON</button>
-        <button id="reverse">Reverse Log Order: OFF</button>
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+            <h1 style="margin: 0;">System Logs</h1>
+            <div style="display: flex; gap: 0.75rem;">
+                <button id="clean" class="danger btn-sm">Clean</button>
+                <button id="update" class="secondary btn-sm">Auto Update: ON</button>
+                <button id="reverse" class="secondary btn-sm">Reverse: OFF</button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                <tr>
+                    <th style="width: 140px">Time</th>
+                    <th style="width: 100px">Level</th>
+                    <th>Message</th>
+                </tr>
+                </thead>
+                <tbody id="log">
+                </tbody>
+            </table>
+        </div>
     </div>
-    <table>
-        <thead>
-        <tr>
-            <th style="width: 100px">Time</th>
-            <th style="width: 40px">Level</th>
-            <th>Message</th>
-        </tr>
-        </thead>
-        <tbody id="log">
-        </tbody>
-    </table>
 </main>
 
 <script>
+    document.head.innerHTML += `
+    <style>
+        .trace { color: var(--text-secondary); opacity: 0.6; }
+        .debug { color: var(--text-secondary); }
+        .info { color: #58a6ff; }
+        .warn { color: #d29922; }
+        .error { color: var(--danger); }
+        
+        .lvl-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            border: 1px solid currentColor;
+        }
+        
+        #log tr td {
+            font-family: 'Inter', monospace;
+            font-size: 0.85rem;
+            vertical-align: top;
+        }
+
+        .btn-sm { padding: 0.5rem 1rem; font-size: 0.8rem; }
+    </style>
+    `;
+
     document.getElementById('clean').addEventListener('click', async () => {
+        if (!confirm('Clean all logs?')) return;
         const r = await fetch('api/log', {method: 'DELETE'});
         if (r.ok) reload();
-        alert(await r.text());
     });
 
-    // Sanitizes the input text to prevent XSS when inserting into the DOM
+    // Sanitizes the input text to prevent XSS
     function escapeHTML(text) {
         return text
             .replace(/&/g, '&amp;')
@@ -83,26 +119,34 @@
     let reverseOrder = false;
     let autoUpdateEnabled = true;
 
-    reverseBtn.textContent = `Reverse Log Order: ${reverseOrder ? 'ON' : 'OFF'}`;
-    update.textContent = `Auto Update: ${autoUpdateEnabled ? 'ON' : 'OFF'}`;
-
     function applyLogStyling(jsonlines) {
         const KEYS = ['time', 'level', 'message'];
-        let lines = JSON.parse('[' + jsonlines.trimEnd().replaceAll('\n', ',') + ']');
+        let lines = [];
+        try {
+            lines = JSON.parse('[' + jsonlines.trimEnd().replaceAll('\n', ',') + ']');
+        } catch(e) { return ''; }
+
         if (reverseOrder) {
             lines = lines.reverse();
         }
         return lines.map(line => {
-            const ts = new Date(line['time']).toLocaleString(undefined, {
-                hour: 'numeric',
-                minute: 'numeric',
-                second: 'numeric',
-                fractionalSecondDigits: 3
-            });
+            const date = new Date(line['time']);
+            const ts = date.toLocaleTimeString(undefined, {
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+            }) + '.' + date.getMilliseconds().toString().padStart(3, '0');
+
             const msg = Object.keys(line).reduce((msg, key) => {
-                return KEYS.indexOf(key) < 0 ? `${msg} ${key}=${line[key]}` : msg;
+                return KEYS.indexOf(key) < 0 ? `${msg} <span style="color:var(--accent)">${key}=${line[key]}</span>` : msg;
             }, line['message']);
-            return `<tr class="${line['level']}"><td>${ts}</td><td>${line['level']}</td><td>${escapeHTML(msg)}</td></tr>`;
+
+            return `<tr class="${line['level']}">
+                <td style="white-space:nowrap; opacity:0.7">${ts}</td>
+                <td><span class="lvl-badge">${line['level']}</span></td>
+                <td style="word-break: break-all;">${escapeHTML(msg)}</td>
+            </tr>`;
         }).join('');
     }
 
@@ -111,31 +155,25 @@
         fetch(url, {cache: 'no-cache'})
             .then(response => response.text())
             .then(data => {
-                // Apply styling to the log data
                 document.getElementById('log').innerHTML = applyLogStyling(data);
             })
-            .catch(error => {
-                console.error('An error occurred:', error);
-            });
+            .catch(error => console.error('An error occurred:', error));
     }
 
     reload();
 
-    update.textContent = `Auto Update: ${autoUpdateEnabled ? 'ON' : 'OFF'}`;
     update.addEventListener('click', () => {
         autoUpdateEnabled = !autoUpdateEnabled;
         update.textContent = `Auto Update: ${autoUpdateEnabled ? 'ON' : 'OFF'}`;
+        update.classList.toggle('secondary', autoUpdateEnabled);
     });
 
-    // Toggle log order
-    reverseBtn.textContent = `Reverse Log Order: ${reverseOrder ? 'ON' : 'OFF'}`;
     reverseBtn.addEventListener('click', () => {
         reverseOrder = !reverseOrder;
-        reverseBtn.textContent = `Reverse Log Order: ${reverseOrder ? 'ON' : 'OFF'}`;
-        reload(); // Reload logs to apply the new order
+        reverseBtn.textContent = `Reverse: ${reverseOrder ? 'ON' : 'OFF'}`;
+        reload();
     });
 
-    // Reload the logs every 5 seconds
     setInterval(() => {
         if (autoUpdateEnabled) reload();
     }, 5000);

@@ -8,6 +8,7 @@ import (
 
 	"github.com/AlexxIT/go2rtc/internal/api"
 	"github.com/AlexxIT/go2rtc/internal/app"
+	"github.com/AlexxIT/go2rtc/internal/db"
 	"github.com/rs/zerolog"
 )
 
@@ -22,8 +23,27 @@ func Init() {
 
 	log = app.GetLogger("streams")
 
-	for name, item := range cfg.Streams {
-		streams[name] = NewStream(item)
+	dbStreams, err := db.GetStreams()
+	if err == nil {
+		if len(dbStreams) == 0 && len(cfg.Streams) > 0 {
+			// Migrate existing YAML streams to DB
+			for name, item := range cfg.Streams {
+				if err := db.SaveStream(name, item); err == nil {
+					log.Info().Str("stream", name).Msg("migrated stream to database")
+				}
+				streams[name] = NewStream(item)
+			}
+		} else {
+			// Load streams from DB
+			for name, item := range dbStreams {
+				streams[name] = NewStream(item)
+			}
+		}
+	} else {
+		log.Warn().Err(err).Msg("failed to load streams from database")
+		for name, item := range cfg.Streams {
+			streams[name] = NewStream(item)
+		}
 	}
 
 	api.HandleFunc("api/streams", apiStreams)

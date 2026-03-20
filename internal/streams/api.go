@@ -5,6 +5,7 @@ import (
 
 	"github.com/AlexxIT/go2rtc/internal/api"
 	"github.com/AlexxIT/go2rtc/internal/app"
+	"github.com/AlexxIT/go2rtc/internal/db"
 	"github.com/AlexxIT/go2rtc/pkg/core"
 	"github.com/AlexxIT/go2rtc/pkg/creds"
 	"github.com/AlexxIT/go2rtc/pkg/probe"
@@ -57,8 +58,8 @@ func apiStreams(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if err := app.PatchConfig([]string{"streams", name}, query["src"]); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+		if err := db.SaveStream(name, query["src"]); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 
 	case "PATCH":
@@ -100,8 +101,8 @@ func apiStreams(w http.ResponseWriter, r *http.Request) {
 	case "DELETE":
 		delete(streams, src)
 
-		if err := app.PatchConfig([]string{"streams", src}, nil); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+		if err := db.DeleteStream(src); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
 }

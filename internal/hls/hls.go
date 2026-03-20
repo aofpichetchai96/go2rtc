@@ -39,9 +39,23 @@ const keepalive = 5 * time.Second
 var sessions = map[string]*Session{}
 var sessionsMu sync.RWMutex
 
+// setStreamCORS sets the Access-Control-Allow-Origin header based on configured stream_origins.
+// If no stream_origins configured, defaults to "*" for backward compatibility (Chromecast etc).
+func setStreamCORS(w http.ResponseWriter, r *http.Request) {
+	origin := api.AllowedOrigin(r)
+	if origin == "" {
+		// fallback to * when no stream_origins configured (backward compat)
+		origin = "*"
+	}
+	w.Header().Set("Access-Control-Allow-Origin", origin)
+	if origin != "*" {
+		w.Header().Set("Vary", "Origin")
+	}
+}
+
 func handlerStream(w http.ResponseWriter, r *http.Request) {
 	// CORS important for Chromecast
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	setStreamCORS(w, r)
 	w.Header().Set("Content-Type", "application/vnd.apple.mpegurl")
 
 	if r.Method == "OPTIONS" {
@@ -98,7 +112,7 @@ func handlerStream(w http.ResponseWriter, r *http.Request) {
 }
 
 func handlerPlaylist(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	setStreamCORS(w, r)
 	w.Header().Set("Content-Type", "application/vnd.apple.mpegurl")
 
 	if r.Method == "OPTIONS" {
@@ -121,7 +135,7 @@ func handlerPlaylist(w http.ResponseWriter, r *http.Request) {
 }
 
 func handlerSegmentTS(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	setStreamCORS(w, r)
 	w.Header().Set("Content-Type", "video/mp2t")
 
 	if r.Method == "OPTIONS" {
@@ -153,7 +167,7 @@ func handlerSegmentTS(w http.ResponseWriter, r *http.Request) {
 }
 
 func handlerInit(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	setStreamCORS(w, r)
 	w.Header().Add("Content-Type", "video/mp4")
 
 	if r.Method == "OPTIONS" {
@@ -183,7 +197,7 @@ func handlerInit(w http.ResponseWriter, r *http.Request) {
 }
 
 func handlerSegmentMP4(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	setStreamCORS(w, r)
 	w.Header().Add("Content-Type", "video/iso.segment")
 
 	if r.Method == "OPTIONS" {

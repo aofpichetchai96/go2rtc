@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Embedded Stream Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            background-color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+        }
+
+        iframe {
+            width: 100%;
+            height: 450px;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Iframe Test Page</h1>
+    <p>หน้านี้จำลองการนำ `stream.html` ไปฝังอยู่ในเว็บอื่นๆ ครับ</p>
+
+    <div class="container">
+        <!-- เปลี่ยนคำว่า test เป็นชื่อกล้องที่คุณต้องการทดสอบได้เลยครับ -->
+        <iframe src="http://localhost:1984/stream.html?src=test2" allow="autoplay; fullscreen" allowfullscreen></iframe>
+    </div>
+</body>
+
+</html>

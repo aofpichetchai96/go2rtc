@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="apple-touch-icon" href="https://alexxit.github.io/go2rtc/icons/apple-touch-icon-180x180.png" sizes="180x180">
+    <link rel="apple-touch-icon" href="https://alexxit.github.io/go2rtc/icons/apple-touch-icon-180x180.png"
+        sizes="180x180">
     <link rel="icon" href="https://alexxit.github.io/go2rtc/icons/favicon.ico">
     <link rel="manifest" href="https://alexxit.github.io/go2rtc/manifest.json">
     <title>stream - go2rtc</title>
@@ -15,7 +17,8 @@
             font-family: Arial, Helvetica, sans-serif;
         }
 
-        html, body {
+        html,
+        body {
             height: 100%;
             width: 100%;
         }
@@ -27,41 +30,99 @@
         }
     </style>
 </head>
-<body>
-<script type="module" src="./video-stream.js"></script>
-<script type="module">
-    const params = new URLSearchParams(location.search);
 
-    // support multiple streams and multiple modes
-    const streams = params.getAll('src');
-    const modes = params.getAll('mode');
-    if (modes.length === 0) modes.push('');
+<body style="background:radial-gradient(circle at center, #161b22 0%, #0d1117 100%);">
+    <script type="module" src="./video-stream.js"></script>
+    <script type="module">
+        const params = new URLSearchParams(location.search);
 
-    while (modes.length > streams.length) {
-        streams.push(streams[0]);
-    }
-    while (streams.length > modes.length) {
-        modes.push(modes[0]);
-    }
+        // support multiple streams and multiple modes
+        const streams = params.getAll('src').filter(s => s !== '');
+        const modes = params.getAll('mode');
 
-    if (streams.length > 1) {
-        document.body.className = 'flex';
-    }
+        function showNoCamera() {
+            document.body.innerHTML = '';
+            document.body.style.background = 'black';
+            const msg = document.createElement('div');
+            msg.innerText = 'No Camera';
+            msg.style.cssText = 'color: white; font-family: Arial, sans-serif; font-size: 2rem; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);';
+            document.body.appendChild(msg);
+        }
 
-    const background = params.get('background') !== 'false';
-    const width = '1 0 ' + (params.get('width') || '320px');
+        if (streams.length === 0) {
+            showNoCamera();
+            throw new Error('No stream source provided');
+        }
 
-    for (let i = 0; i < streams.length; i++) {
-        /** @type {VideoStream} */
-        const video = document.createElement('video-stream');
-        video.background = background;
-        video.mode = modes[i] || video.mode;
-        video.style.flex = width;
-        video.src = new URL('api/ws?src=' + encodeURIComponent(streams[i]), location.href);
-        document.body.appendChild(video);
-    }
+        if (modes.length === 0) modes.push('');
 
-    document.title = streams.join('/') + ' - go2rtc';
-</script>
+        while (modes.length > streams.length) {
+            streams.push(streams[0]);
+        }
+        while (streams.length > modes.length) {
+            modes.push(modes[0]);
+        }
+
+        if (streams.length > 1) {
+            document.body.className = 'flex';
+        }
+
+        const background = params.get('background') !== 'false';
+        const width = '1 1 ' + (params.get('width') || '45%');
+
+        for (let i = 0; i < streams.length; i++) {
+            /** @type {VideoStream} */
+            const video = document.createElement('video-stream');
+            video.background = background;
+            video.mode = modes[i] || video.mode;
+            video.style.flex = width;
+            video.style.margin = '10px';
+            video.style.borderRadius = '16px';
+            video.style.overflow = 'hidden';
+            video.style.boxShadow = '0 8px 32px rgba(0,0,0,0.4)';
+            video.style.border = '1px solid rgba(255,255,255,0.05)';
+            video.src = new URL('api/ws?src=' + encodeURIComponent(streams[i]), location.href);
+            document.body.appendChild(video);
+        }
+
+        document.title = streams.join('/') + ' - go2rtc';
+
+        // 30 seconds timeout to check if video loaded
+        setTimeout(() => {
+            let loaded = false;
+            const vids = document.querySelectorAll('video');
+            vids.forEach(v => {
+                // readyState >= 2 means HAVE_CURRENT_DATA
+                if (v.readyState >= 2 || v.videoWidth > 0 || v.currentTime > 0) {
+                    loaded = true;
+                }
+            });
+
+            if (!loaded) {
+                showNoCamera();
+            }
+        }, 15000);
+    </script>
+    <style>
+        .flex {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        video-stream {
+            background: #000;
+            transition: transform 0.3s ease;
+        }
+
+        video-stream:hover {
+            transform: scale(1.02);
+            z-index: 10;
+        }
+    </style>
 </body>
+
 </html>

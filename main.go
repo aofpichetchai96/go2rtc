@@ -7,7 +7,9 @@ import (
 	"github.com/AlexxIT/go2rtc/internal/api"
 	"github.com/AlexxIT/go2rtc/internal/api/ws"
 	"github.com/AlexxIT/go2rtc/internal/app"
+	"github.com/AlexxIT/go2rtc/internal/auth"
 	"github.com/AlexxIT/go2rtc/internal/bubble"
+	"github.com/AlexxIT/go2rtc/internal/db"
 	"github.com/AlexxIT/go2rtc/internal/debug"
 	"github.com/AlexxIT/go2rtc/internal/doorbird"
 	"github.com/AlexxIT/go2rtc/internal/dvrip"
@@ -57,6 +59,8 @@ func main() {
 
 	modules := []module{
 		{"", app.Init},    // init config and logs
+		{"db", db.Init},   // init database connection
+		{"auth", auth.Init},// init user auth & default user
 		{"api", api.Init}, // init API before all others
 		{"ws", ws.Init},   // init WS API endpoint
 		{"", streams.Init},

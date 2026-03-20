@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Origins - go2rtc</title>
+</head>
+<body>
+    <main>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2>Allowed Origins</h2>
+            <button id="add-origin-btn" style="display: flex; align-items: center; gap: 0.5rem;">
+                <i data-lucide="globe" style="width: 18px;"></i> Add Origin
+            </button>
+        </div>
+
+        <p style="color: var(--text-secondary); margin-bottom: 2rem;">
+            Configure allowed domains (e.g. <code>http://localhost:3000</code> or <code>https://mywebsite.com</code>) 
+            that can embed public stream links. If empty, unauthorized sites will be blocked.
+        </p>
+
+        <div id="add-origin-form-container" class="card" style="display: none; margin-bottom: 2rem; animation: formAppear 0.3s ease-out;">
+            <h3 style="margin-bottom: 1rem;">Allow New Origin</h3>
+            <form id="add-origin-form" style="display: flex; gap: 1rem; align-items: flex-end;">
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; flex: 1;">
+                    <label>Origin URL</label>
+                    <input type="text" id="origin" placeholder="https://example.com" required autocomplete="off">
+                </div>
+                <button type="submit" style="height: 42px;">Save</button>
+                <button type="button" id="cancel-origin-btn" class="secondary" style="height: 42px;">Cancel</button>
+            </form>
+            <div id="form-error" style="color: var(--danger); margin-top: 1rem; display: none;"></div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">ID</th>
+                        <th>Origin</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="origin-list">
+                    <!-- Loaded via JS -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script src="main.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            loadOrigins();
+
+            const formContainer = document.getElementById('add-origin-form-container');
+            const formError = document.getElementById('form-error');
+
+            document.getElementById('add-origin-btn').addEventListener('click', () => {
+                formContainer.style.display = 'block';
+                formError.style.display = 'none';
+                document.getElementById('origin').focus();
+            });
+
+            document.getElementById('cancel-origin-btn').addEventListener('click', () => {
+                formContainer.style.display = 'none';
+                document.getElementById('add-origin-form').reset();
+            });
+
+            document.getElementById('add-origin-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = e.target.querySelector('button[type="submit"]');
+                btn.disabled = true;
+                
+                let originVal = document.getElementById('origin').value.trim();
+                if (originVal.endsWith('/')) {
+                    originVal = originVal.slice(0, -1);
+                }
+
+                const formData = new URLSearchParams();
+                formData.append('origin', originVal);
+                
+                try {
+                    const r = await fetch('api/origins', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: formData.toString()
+                    });
+                    
+                    if (r.ok) {
+                        document.getElementById('add-origin-form').reset();
+                        formContainer.style.display = 'none';
+                        await loadOrigins();
+                    } else {
+                        const txt = await r.text();
+                        formError.textContent = txt || 'Failed to add origin';
+                        formError.style.display = 'block';
+                    }
+                } catch (err) {
+                    formError.textContent = 'Network error';
+                    formError.style.display = 'block';
+                }
+                btn.disabled = false;
+            });
+        });
+
+        async function loadOrigins() {
+            try {
+                const r = await fetch('api/origins');
+                if (!r.ok) return;
+                const origins = await r.json();
+                
+                const tbody = document.getElementById('origin-list');
+                tbody.innerHTML = '';
+                
+                if (!origins || origins.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-secondary);">No custom origins defined</td></tr>';
+                    return;
+                }
+
+                origins.forEach(o => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${o.id}</td>
+                        <td><strong><a href="${o.origin}" target="_blank">${o.origin}</a></strong></td>
+                        <td style="text-align: right;">
+                            <button class="danger" onclick="deleteOrigin('${o.origin}')" style="padding: 0.5rem; display: inline-flex;"><i data-lucide="trash-2" style="width: 16px;"></i></button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                lucide.createIcons();
+            } catch (e) {
+                console.error('Failed to load origins:', e);
+            }
+        }
+
+        async function deleteOrigin(origin) {
+            if (!confirm('Are you sure you want to delete ' + origin + '?')) return;
+            
+            try {
+                const r = await fetch('api/origins?origin=' + encodeURIComponent(origin), { method: 'DELETE' });
+                if (r.ok) {
+                    await loadOrigins();
+                } else {
+                    alert('Failed to delete origin');
+                }
+            } catch (e) {
+                alert('Network error');
+            }
+        }
+    </script>
+</body>
+</html>
