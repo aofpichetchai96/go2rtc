@@ -4,7 +4,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="cctv-icon.png">
     <title>Stream-Add</title>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -38,16 +37,17 @@
                 <form id="stream-form" class="form-group"
                     style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end;">
                     <div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label style="font-weight: 500;">Stream Name</label>
-                        <input type="text" name="name" placeholder="e.g. front-door" style="width: 100%;">
+                        <label style="font-weight: 500;">Stream Name <label style="color: red;">*</label></label>
+                        <input type="text" name="name" placeholder="e.g. front-door" style="width: 100%;" required>
                     </div>
                     <div style="flex: 2; min-width: 300px; display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label style="font-weight: 500;">Source URL / Command</label>
+                        <label style="font-weight: 500;">Source URL / Command <label
+                                style="color: red;">*</label></label>
                         <input type="text" name="src" placeholder="rtsp://user:pass@192.168.1.10..." required
                             style="width: 100%;">
                     </div>
                     <div style="flex: 1; min-width: 150px; display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label style="font-weight: 500;">Camera Type</label>
+                        <label style="font-weight: 500;">Camera Type <label style="color: red;">*</label></label>
                         <select id="camera-type-select" name="type"
                             style="width: 100%; height: 48px; background-color: rgba(0, 0, 0, 0.2); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px;">
                             <option value="">Default</option>

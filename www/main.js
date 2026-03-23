@@ -252,13 +252,14 @@ const currentPage = location.pathname.split('/').pop() || 'index.html';
 document.body.innerHTML = `
 <header>
     <nav>
+        <a href="index.html"><img src="cctv-icon.png" alt="cctv-icon" style="width: 45px;"></a>
         <a href="index.html"><b>go2rtc</b></a>
         <a href="add.html" class="${currentPage === 'add.html' ? 'active' : ''}">Add</a>
         <a href="users.html" class="${currentPage === 'users.html' ? 'active' : ''}">Users</a>
         <a href="origins.html" class="${currentPage === 'origins.html' ? 'active' : ''}">Origins</a>
         <a href="tokens.html" class="${currentPage === 'tokens.html' ? 'active' : ''}">Tokens</a>
         <a href="types.html" class="${currentPage === 'types.html' ? 'active' : ''}">Types</a>
-        <a href="#" id="logout-btn" style="margin-left: auto; color: var(--danger);">Logout</a>
+        <a href="#" class="btn-sm danger" id="logout-btn" style="margin-left: auto; color: var(--danger);">Logout</a>
     </nav>
 </header>
 ` + document.body.innerHTML;
