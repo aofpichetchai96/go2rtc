@@ -114,6 +114,20 @@
             gap: 0.75rem;
             background: rgba(255, 255, 255, 0.01);
         }
+
+        .spin-anim {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 
@@ -131,12 +145,29 @@
                     Streams Dashboard
                 </h1>
                 <div class="controls" style="display: flex; gap: 1rem; align-items: center;">
-                    <div id="total-cameras" class="count-badge">
+                    <div id="total-cameras" class="count-badge" style="width: 200px;">
                         <i data-lucide="video" style="width: 16px; height: 16px;"></i>
                         Total Cameras: <b>0</b>
                     </div>
                     <input type="text" id="filter" placeholder="Filter streams..."
-                        style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+                        style="padding: 0.5rem 1rem; font-size: 0.85rem; width: 370px;">
+                    <button id="refresh-btn" class="secondary"
+                        style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 3.3rem;">
+                        <i data-lucide="refresh-cw" style="width: 18px; height: 18px;"></i>
+                        Refresh
+                    </button>
+                </div>
+                <div class="controls" style="display: flex; gap: 1rem; align-items: center;">
+                    <button id="select-all-btn" class="secondary btn-sm"
+                        style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 3rem;">
+                        <i data-lucide="check-square" style="width: 16px; height: 16px;"></i>
+                        Select All
+                    </button>
+                    <button id="reset-selected-btn" class="action-icon warning btn-sm"
+                        style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; width: 180px;">
+                        <i data-lucide="x-square" style="width: 16px; height: 16px;"></i>
+                        Reset Selected
+                    </button>
                     <button id="multi-stream-btn" class="accent"
                         style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.25rem;">
                         <i data-lucide="play-circle" style="width: 18px; height: 18px;"></i>
@@ -149,18 +180,6 @@
                     </button>
                 </div>
             </div>
-
-            <!-- <div
-                style="margin-bottom: 1.5rem; display: flex; gap: 1.5rem; flex-wrap: wrap; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid var(--border-color);">
-                <div
-                    style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; margin-right: 0.5rem;">
-                    Playback Modes:</div>
-                <label><input type="checkbox" name="webrtc" checked> WebRTC</label>
-                <label><input type="checkbox" name="mse" checked> MSE</label>
-                <label><input type="checkbox" name="hls" checked> HLS</label>
-                <label><input type="checkbox" name="mjpeg" checked> MJPEG</label>
-            </div> -->
-
             <div class="table-container">
                 <table>
                     <thead>
@@ -238,9 +257,9 @@
         const templates = [
             '<a href="#" onclick="openStreamPopup(\'{name}\'); return false;" class="action-icon" title="Live Stream"><i data-lucide="play" style="width: 30px; height: 16px;"></i></a>',
             '<button onclick="copyStreamLink(\'{name}\')" class="btn-sm secondary" style="font-size: 0.75rem; padding: 0.3rem 0.6rem;">Copy HTTP</button>',
-            '<a href="links.html?src={name}" class="action-icon" title="Links Info"><i data-lucide="info" style="width: 30px; height: 16px;"></i></a>',
-            '<button onclick="openEditModal(\'{name}\', \'{url}\', \'{type}\')" class="action-icon warning" title="Edit Stream" style="width: 80px;">Edit</button>',
-            '<button onclick="deleteStream(\'{name}\')" class="action-icon danger" title="Delete Stream" style="width: 80px;">Delete</button>',
+            '<a href="links.html?src={name}" class="action-icon" title="Data / Links" style="color: var(--accent); background: rgba(0, 217, 181, 0.05); border-color: rgba(0, 217, 181, 0.1);"><i data-lucide="database" style="width: 30px; height: 16px;"></i></a>',
+            '<button onclick="openEditModal(\'{name}\', \'{url}\', \'{type}\')" class="action-icon warning" title="Edit Stream" style="width: 50px;">Edit</button>',
+            '<button onclick="deleteStream(\'{name}\')" class="action-icon danger" title="Delete Stream" style="width: 60px;">Delete</button>',
         ];
         document.head.innerHTML += `
     <style>
@@ -397,6 +416,16 @@
 
         const tbody = document.getElementById('streams');
 
+        function updateSelectAllHeader() {
+            const currentCheckboxes = document.querySelectorAll('#streams input[type="checkbox"]');
+            if (currentCheckboxes.length === 0) {
+                document.getElementById('selectall').checked = false;
+                return;
+            }
+            const allChecked = Array.from(currentCheckboxes).every(checkbox => checkbox.checked);
+            document.getElementById('selectall').checked = allChecked;
+        }
+
         // Handle checkbox changes to update global selection state
         tbody.addEventListener('change', ev => {
             if (ev.target.type === 'checkbox' && ev.target.name) {
@@ -405,8 +434,10 @@
                 } else {
                     selectedStreams.delete(ev.target.name);
                 }
+                updateSelectAllHeader();
             }
         });
+
         async function deleteStream(name) {
             const src = decodeURIComponent(name);
             const message = `Confirm deletion of stream "${src}"? Type the name to perform this action.`;
@@ -424,7 +455,7 @@
         }
 
         document.getElementById('selectall').addEventListener('change', ev => {
-            document.querySelectorAll('#streams input').forEach(el => {
+            document.querySelectorAll('#streams input[type="checkbox"]').forEach(el => {
                 el.checked = ev.target.checked;
                 if (ev.target.checked) {
                     selectedStreams.add(el.name);
@@ -434,10 +465,27 @@
             });
         });
 
+        document.getElementById('select-all-btn').addEventListener('click', () => {
+            allFilteredStreamNames.forEach(name => selectedStreams.add(name));
+            document.querySelectorAll('#streams input[type="checkbox"]').forEach(el => {
+                el.checked = true;
+            });
+            document.getElementById('selectall').checked = true;
+        });
+
+        document.getElementById('reset-selected-btn').addEventListener('click', () => {
+            selectedStreams.clear();
+            document.querySelectorAll('#streams input[type="checkbox"]').forEach(el => {
+                el.checked = false;
+            });
+            document.getElementById('selectall').checked = false;
+        });
+
         const filterInput = document.getElementById('filter');
         let currentStreamPage = 1;
         const itemsPerPage = 6;
         let totalPages = 1;
+        let allFilteredStreamNames = [];
 
         filterInput.addEventListener('input', () => {
             currentStreamPage = 1; // Reset to first page on filter change
@@ -470,6 +518,8 @@
                 const filteredEntries = Object.entries(data).filter(([key]) => {
                     return !filterValue || key.toLowerCase().includes(filterValue);
                 });
+
+                allFilteredStreamNames = filteredEntries.map(([key]) => key);
 
                 // Pagination logic
                 totalPages = Math.ceil(filteredEntries.length / itemsPerPage) || 1;
@@ -534,6 +584,7 @@
                     }
                 });
 
+                updateSelectAllHeader();
                 if (window.lucide) window.lucide.createIcons();
             });
         }
@@ -564,8 +615,16 @@
             }
         }
 
-        // Auto-reload
-        setInterval(reload, 2000);
+        // Initial load
+        reload();
+
+        document.getElementById('refresh-btn').addEventListener('click', () => {
+            const btn = document.getElementById('refresh-btn');
+            const icon = btn.querySelector('i, svg');
+            if (icon) icon.classList.add('spin-anim');
+            reload();
+            if (icon) setTimeout(() => icon.classList.remove('spin-anim'), 1000);
+        });
 
         const apiInfoUrl = new URL('api', location.href);
         fetch(apiInfoUrl, { cache: 'no-cache' }).then(r => r.json()).then(data => {

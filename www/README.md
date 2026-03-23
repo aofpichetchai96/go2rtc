@@ -83,7 +83,8 @@ https://webrtc.org/getting-started/unified-plan-transition-guide?hl=en
     <!-- iOS Safari -->
     <link rel="apple-touch-icon" href="https://alexxit.github.io/go2rtc/icons/apple-touch-icon-180x180.png" sizes="180x180">
     <!-- Classic, desktop browsers -->
-    <link rel="icon" href="https://alexxit.github.io/go2rtc/icons/favicon.ico">
+    <!-- <link rel="icon" href="."> -->
+    <link rel="icon" type="image/png" href="cctv-icon.png">
     <!-- Android Chrome -->
     <link rel="manifest" href="https://alexxit.github.io/go2rtc/manifest.json">
 ```

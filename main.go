@@ -50,7 +50,7 @@ import (
 )
 
 func main() {
-	app.Version = "2.0.2"
+	app.Version = "2.0.4"
 
 	type module struct {
 		name string

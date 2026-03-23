@@ -260,7 +260,7 @@ func middlewareAuth(localAuth bool, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 		// Allow static routes, assets, and internal login paths to bypass authentication
-		exempt := path == "/api/login" || path == "/api/logout" || path == "/login.html" || path == "/favicon.ico" || path == "/manifest.json" || strings.HasSuffix(path, ".js") || strings.HasPrefix(path, "/icons/")
+		exempt := path == "/api/login" || path == "/api/logout" || path == "/login.html" || path == "/cctv-icon.png" || path == "/manifest.json" || strings.HasSuffix(path, ".js") || strings.HasPrefix(path, "/icons/")
 		publicStream := path == "/stream.html" || path == "/api/ws" || strings.HasPrefix(path, "/api/stream.")
 
 		if !exempt {

@@ -54,7 +54,7 @@ func apiHomekit(w http.ResponseWriter, r *http.Request) {
 			if srv := servers[id]; srv != nil {
 				api.ResponsePrettyJSON(w, srv)
 			} else {
-				http.Error(w, "server not found", http.StatusNotFound)
+				w.WriteHeader(http.StatusNoContent)
 			}
 		} else {
 			api.ResponsePrettyJSON(w, servers)
