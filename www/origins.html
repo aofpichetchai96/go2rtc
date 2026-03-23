@@ -9,12 +9,18 @@
 
 <body>
     <main>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <h2>Allowed Origins</h2>
-            <button id="add-origin-btn" style="display: flex; align-items: center; gap: 0.5rem;">
-                <i data-lucide="globe" style="width: 18px;"></i> Add Origin
-            </button>
-        </div>
+        <div class="card">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+                <h1 style="margin: 0; display: flex; align-items: center; gap: 0.75rem;">
+                    <span
+                        style="width: 12px; height: 12px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 12px var(--accent);"></span>
+                    Allowed Origins
+                </h1>
+                <button id="add-origin-btn" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i data-lucide="globe" style="width: 18px;"></i> Add Origin
+                </button>
+            </div>
 
         <p style="color: var(--text-secondary); margin-bottom: 2rem;">
             Configure allowed domains (e.g. <code>http://localhost:3000</code> or <code>https://mywebsite.com</code>)
@@ -48,6 +54,11 @@
                     <!-- Loaded via JS -->
                 </tbody>
             </table>
+        </div>
+        </div>
+        <div class="info"
+            style="margin-top: 1rem; text-align: right; font-size: 0.8rem; color: var(--text-secondary); opacity: 0.7;">
+            Configure allowed domains that can embed public stream links. If empty, unauthorized sites will be blocked.
         </div>
     </main>
 

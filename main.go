@@ -50,7 +50,7 @@ import (
 )
 
 func main() {
-	app.Version = "1.9.12"
+	app.Version = "2.0.2"
 
 	type module struct {
 		name string
@@ -58,11 +58,11 @@ func main() {
 	}
 
 	modules := []module{
-		{"", app.Init},    // init config and logs
-		{"db", db.Init},   // init database connection
-		{"auth", auth.Init},// init user auth & default user
-		{"api", api.Init}, // init API before all others
-		{"ws", ws.Init},   // init WS API endpoint
+		{"", app.Init},      // init config and logs
+		{"db", db.Init},     // init database connection
+		{"auth", auth.Init}, // init user auth & default user
+		{"api", api.Init},   // init API before all others
+		{"ws", ws.Init},     // init WS API endpoint
 		{"", streams.Init},
 		// Main sources and servers
 		{"http", http.Init},     // rtsp source, HTTP server

@@ -228,7 +228,34 @@ document.head.innerHTML += `
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
     }
 
-    /* table on mobile */
+    /* small buttons */
+    .btn-sm {
+        display: inline-block;
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        text-decoration: none !important;
+        line-height: 1;
+    }
+    .btn-sm.secondary {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+    }
+    .btn-sm.secondary:hover {
+        background: rgba(255,255,255,0.1);
+    }
+    .btn-sm.danger {
+        color: var(--danger);
+        border: 1px solid rgba(248, 81, 73, 0.2);
+    }
+    .btn-sm.danger:hover {
+        background: var(--danger);
+        color: white;
+    }
+
     @media (max-width: 480px) {
         nav {
             justify-content: center;

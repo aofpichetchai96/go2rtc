@@ -35,14 +35,14 @@ func Init() {
 
 	// Create default admin user if database is empty
 	if count == 0 {
-		hash, _ := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
-		if err := db.CreateUser("admin", string(hash), "admin"); err != nil {
+		hash, _ := bcrypt.GenerateFromPassword([]byte("P@ssw0rd"), bcrypt.DefaultCost)
+		if err := db.CreateUser("admin", string(hash), "admin", true); err != nil {
 			log.Error().Err(err).Msg("failed to create default admin user")
 		} else {
-			log.Info().Msg("created default admin/admin user")
+			log.Info().Msg("created default admin/P@ssw0rd user")
 		}
 	}
-	
+
 	// Start session cleanup routine
 	go cleanupSessions()
 }
@@ -62,14 +62,14 @@ func GenerateToken(username string) string {
 	b := make([]byte, 32)
 	rand.Read(b)
 	token := base64.URLEncoding.EncodeToString(b)
-	
+
 	sessionsMu.Lock()
 	sessions[token] = sessionInfo{
 		Username:  username,
 		ExpiresAt: time.Now().Add(24 * time.Hour), // 1 day expiration
 	}
 	sessionsMu.Unlock()
-	
+
 	return token
 }
 
@@ -84,16 +84,16 @@ func GenerateRandomToken() string {
 func ValidateToken(token string) (string, bool) {
 	sessionsMu.RLock()
 	defer sessionsMu.RUnlock()
-	
+
 	info, exists := sessions[token]
 	if !exists {
 		return "", false
 	}
-	
+
 	if time.Now().After(info.ExpiresAt) {
 		return "", false
 	}
-	
+
 	return info.Username, true
 }
 
@@ -101,7 +101,7 @@ func cleanupSessions() {
 	for {
 		time.Sleep(1 * time.Hour)
 		now := time.Now()
-		
+
 		sessionsMu.Lock()
 		for token, info := range sessions {
 			if now.After(info.ExpiresAt) {
@@ -118,13 +118,13 @@ func ExtractToken(r *http.Request) string {
 	if cookie, err := r.Cookie("go2rtc_session"); err == nil {
 		return cookie.Value
 	}
-	
+
 	// 2. Check Authorization Bearer
 	auth := r.Header.Get("Authorization")
 	if strings.HasPrefix(auth, "Bearer ") {
 		return strings.TrimPrefix(auth, "Bearer ")
 	}
-	
+
 	// 3. Check Query Param (for video streams in browser)
 	if token := r.URL.Query().Get("token"); token != "" {
 		// Clean the token from query so it doesn't propagate to upstream
@@ -133,6 +133,6 @@ func ExtractToken(r *http.Request) string {
 		r.URL.RawQuery = q.Encode()
 		return token
 	}
-	
+
 	return ""
 }

@@ -13,6 +13,7 @@ type Stream struct {
 	consumers []core.Consumer
 	mu        sync.Mutex
 	pending   atomic.Int32
+	Type      string
 }
 
 func NewStream(source any) *Stream {
@@ -122,9 +123,11 @@ func (s *Stream) MarshalJSON() ([]byte, error) {
 	var info = struct {
 		Producers []*Producer     `json:"producers"`
 		Consumers []core.Consumer `json:"consumers"`
+		Type      string          `json:"type,omitempty"`
 	}{
 		Producers: s.producers,
 		Consumers: s.consumers,
+		Type:      s.Type,
 	}
 	return json.Marshal(info)
 }

@@ -261,7 +261,7 @@ func middlewareAuth(localAuth bool, next http.Handler) http.Handler {
 		path := r.URL.Path
 		// Allow static routes, assets, and internal login paths to bypass authentication
 		exempt := path == "/api/login" || path == "/api/logout" || path == "/login.html" || path == "/favicon.ico" || path == "/manifest.json" || strings.HasSuffix(path, ".js") || strings.HasPrefix(path, "/icons/")
-		publicStream := path == "/stream.html" || path == "/api/ws" || path == "/api/streams" || strings.HasPrefix(path, "/api/stream.")
+		publicStream := path == "/stream.html" || path == "/api/ws" || strings.HasPrefix(path, "/api/stream.")
 
 		if !exempt {
 			// 1. Check Session Token or API Token
@@ -417,7 +417,12 @@ func apiUsers(w http.ResponseWriter, r *http.Request) {
 		}
 
 		hash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-		if err := db.CreateUser(username, string(hash), "admin"); err != nil {
+		// Assuming 'role' is intended to be passed, and 'false' for isProtected
+		// If 'role' is not defined, it would be a compilation error.
+		// Based on the instruction and snippet, we'll add 'false' as the last argument.
+		// The snippet also implies 'role' should be a variable, but the original code hardcodes "admin".
+		// To make the change syntactically correct and faithful to "add false", we'll add it after "admin".
+		if err := db.CreateUser(username, string(hash), "admin", false); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -572,7 +577,7 @@ func apiTypes(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if err := db.CreateCameraType(name); err != nil {
+		if err := db.CreateCameraType(name, false); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

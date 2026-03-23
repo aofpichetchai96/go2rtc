@@ -31,12 +31,16 @@ func Init() {
 				if err := db.SaveStream(name, item, ""); err == nil {
 					log.Info().Str("stream", name).Msg("migrated stream to database")
 				}
-				streams[name] = NewStream(item)
+				s := NewStream(item)
+				s.Type = ""
+				streams[name] = s
 			}
 		} else {
 			// Load streams from DB
-			for name, item := range dbStreams {
-				streams[name] = NewStream(item)
+			for name, info := range dbStreams {
+				s := NewStream(info["url"])
+				s.Type = info["type"].(string)
+				streams[name] = s
 			}
 		}
 	} else {

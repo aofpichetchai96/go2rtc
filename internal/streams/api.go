@@ -53,10 +53,13 @@ func apiStreams(w http.ResponseWriter, r *http.Request) {
 			name = src
 		}
 
-		if _, err := New(name, query["src"]...); err != nil {
+		stream, err := New(name, query["src"]...)
+		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+
+		stream.Type = query.Get("type")
 
 		if err := db.SaveStream(name, query["src"], query.Get("type")); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

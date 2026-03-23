@@ -1,6 +1,6 @@
-# คู่มือการใช้งาน API สำหรับ go2rtc
+# คู่มือการใช้งาน API สำหรับ go2rtc (Version 2.0.1)
 
-เอกสารชุดนี้อธิบายวิธีการใช้งาน API สำหรับการเพิ่มและจัดการข้อมูลในระบบ go2rtc
+เอกสารชุดนี้อธิบายวิธีการใช้งาน API สำหรับการเพิ่มและจัดการข้อมูลในระบบ go2rtc (อัปเดตล่าสุดสำหรับการใช้ระบบ Protected Records)
 
 ## 1. การจัดการสตรีม (Streams Management)
 
@@ -70,8 +70,9 @@
     *   `password`: รหัสผ่าน
 *   **ตัวอย่างการยิง API:**
     ```bash
-    curl -X POST http://localhost:1984/api/users -d "username=user1&password=mypassword"
+    curl -X POST http://localhost:1984/api/users -d "username=admin&password=P@ssw0rd"
     ```
+    *(ค่าเริ่มต้นระบบคือ admin / P@ssw0rd)*
 
 ### ลบผู้ใช้งาน
 *   **Method:** `DELETE`
@@ -79,6 +80,7 @@
 *   **Query Parameters:**
     *   `username`: ชื่อผู้ใช้ที่ต้องการลบ
 *   **ตัวอย่างการยิง API:**
+*   **หมายเหตุ:** ผู้ใช้งานที่มีสถานะ `is_protected: true` จะไม่สามารถลบได้
     ```bash
     curl -X DELETE "http://localhost:1984/api/users?username=user1"
     ```
@@ -149,12 +151,15 @@
 
 ใช้สำหรับจัดการรายการประเภทกล้องที่มีให้เลือกในระบบ
 
-### ดูรายการประเภทกล้อง
 *   **Method:** `GET`
 *   **Endpoint:** `/api/types`
-*   **ตัวอย่างการยิง API:**
-    ```bash
-    curl -X GET "http://localhost:1984/api/types"
+*   **ผลลัพธ์ (ตัวอย่าง):**
+    ```json
+    [
+      {"id": 1, "name": "Bullet", "is_protected": true},
+      {"id": 2, "name": "Dome", "is_protected": true},
+      {"id": 3, "name": "PTZ", "is_protected": true}
+    ]
     ```
 
 ### เพิ่มประเภทกล้องใหม่
@@ -172,9 +177,10 @@
 *   **Endpoint:** `/api/types`
 *   **Query Parameters:**
     *   `id`: รหัส ID ของประเภทที่ต้องการลบ
+*   **หมายเหตุ:** ประเภทกล้องที่มีสถานะ `is_protected: true` จะไม่สามารถลบได้
 *   **ตัวอย่างการยิง API:**
     ```bash
-    curl -X DELETE "http://localhost:1984/api/types?id=1"
+    curl -X DELETE "http://localhost:1984/api/types?id=4"
     ```
 
 > [!NOTE]

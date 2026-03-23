@@ -14,19 +14,23 @@
     <script src="main.js"></script>
 
     <main>
-        <div style="display: flex; flex-direction: column; gap: 2.5rem;">
-            <!-- Header -->
+        <div class="card" style="margin-bottom: 2rem;">
             <div
-                style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
-                <div>
-                    <h1 style="margin: 0; font-size: 2rem; letter-spacing: -0.02em;">Add New Stream</h1>
-                    <p style="color: var(--text-secondary); margin: 0.5rem 0 0 0;">Manual configuration or automatic
-                        device discovery</p>
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0rem; flex-wrap: wrap; gap: 1rem;">
+                <h1 style="margin: 0; display: flex; align-items: center; gap: 0.75rem;">
+                    <span
+                        style="width: 12px; height: 12px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 12px var(--accent);"></span>
+                    Add New Stream
+                </h1>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <button id="btn-back" class="secondary"
+                        style="display: none; padding: 0.5rem 1rem; font-size: 0.85rem;">← Back to Categories</button>
+                    <a href="index.html" class="btn-sm secondary">Back to Dashboard</a>
                 </div>
-                <button id="btn-back" class="secondary"
-                    style="display: none; padding: 0.5rem 1rem; font-size: 0.85rem;">← Back to Categories</button>
             </div>
+        </div>
 
+        <div style="display: flex; flex-direction: column; gap: 2.5rem;">
             <!-- Quick Add Section -->
             <div id="quick-add-container" class="card"
                 style="background: linear-gradient(135deg, rgba(0, 217, 181, 0.05) 0%, rgba(0,0,0,0) 100%); border-color: rgba(0, 217, 181, 0.2);">
@@ -49,8 +53,7 @@
                     <div style="flex: 1; min-width: 150px; display: flex; flex-direction: column; gap: 0.5rem;">
                         <label style="font-weight: 500;">Camera Type <label style="color: red;">*</label></label>
                         <select id="camera-type-select" name="type"
-                            style="width: 100%; height: 48px; background-color: rgba(0, 0, 0, 0.2); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px;">
-                            <option value="">Default</option>
+                            style="width: 100%; height: 48px; background-color: rgba(0, 0, 0, 0.2); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px;" required>
                         </select>
                     </div>
                     <button type="submit" style="height: 48px; min-width: 120px;">Add Stream</button>
@@ -116,8 +119,7 @@
 
                     <div id="section-hass" class="discovery-section" style="display: none;">
                         <h2 style="margin-bottom: 0.5rem;">Smart Home Integrations</h2>
-                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 2rem;">Sync with other
-                            platforms</p>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 2rem;">Sync with other platforms</p>
 
                         <div style="display: flex; flex-direction: column; gap: 2rem;">
                             <div
@@ -365,6 +367,7 @@
                         const opt = document.createElement('option');
                         opt.value = t.name;
                         opt.textContent = t.name;
+                        if (t.name === 'Bullet') opt.selected = true;
                         select.appendChild(opt);
                     });
                 } catch (err) { console.error('Failed to load types:', err); }

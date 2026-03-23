@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stream-go2rtc</title>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         .controls {
             display: flex;
@@ -15,6 +17,102 @@
 
         .info {
             color: #888;
+        }
+
+        .count-badge {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            padding: 0.25rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .count-badge b {
+            color: var(--accent);
+            font-size: 1rem;
+        }
+
+        .action-icon {
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid transparent;
+        }
+
+        .action-icon:hover {
+            color: var(--accent);
+            background: rgba(0, 217, 181, 0.1);
+            border-color: rgba(0, 217, 181, 0.2);
+        }
+
+        .action-icon.danger:hover {
+            color: var(--danger);
+            background: rgba(248, 81, 73, 0.1);
+            border-color: rgba(248, 81, 73, 0.2);
+        }
+
+        .action-icon.warning {
+            color: #ffc107;
+            border: 1px solid rgba(255, 193, 7, 0.2);
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .action-icon.warning:hover {
+            background: rgba(255, 193, 7, 0.1);
+            color: #ffca28;
+            border-color: rgba(255, 193, 7, 0.4);
+        }
+
+        /* Form styles for modal */
+        .form-group {
+            margin-bottom: 1.25rem;
+            padding: 0 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .form-group input:focus {
+            border-color: var(--accent);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 217, 181, 0.1);
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            background: rgba(255, 255, 255, 0.01);
         }
     </style>
 </head>
@@ -33,13 +131,26 @@
                     Streams Dashboard
                 </h1>
                 <div class="controls" style="display: flex; gap: 1rem; align-items: center;">
+                    <div id="total-cameras" class="count-badge">
+                        <i data-lucide="video" style="width: 16px; height: 16px;"></i>
+                        Total Cameras: <b>0</b>
+                    </div>
                     <input type="text" id="filter" placeholder="Filter streams..."
                         style="padding: 0.5rem 1rem; font-size: 0.85rem;">
-                    <button id="multi-stream-btn">Open selected</button>
+                    <button id="multi-stream-btn" class="accent"
+                        style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.25rem;">
+                        <i data-lucide="play-circle" style="width: 18px; height: 18px;"></i>
+                        Live View Selected
+                    </button>
+                    <button id="delete-selected-btn" class="danger"
+                        style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.25rem;">
+                        <i data-lucide="trash-2" style="width: 18px; height: 18px;"></i>
+                        Delete Selected
+                    </button>
                 </div>
             </div>
 
-            <div
+            <!-- <div
                 style="margin-bottom: 1.5rem; display: flex; gap: 1.5rem; flex-wrap: wrap; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid var(--border-color);">
                 <div
                     style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; margin-right: 0.5rem;">
@@ -48,20 +159,30 @@
                 <label><input type="checkbox" name="mse" checked> MSE</label>
                 <label><input type="checkbox" name="hls" checked> HLS</label>
                 <label><input type="checkbox" name="mjpeg" checked> MJPEG</label>
-            </div>
+            </div> -->
 
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
-                            <th style="width: 50%;"><label><input id="selectall" type="checkbox"> Name</label></th>
-                            <th style="width: 20%;">Status</th>
-                            <th style="width: 30%; text-align: right;">Actions</th>
+                            <th style="width: 35%;"><label><input id="selectall" type="checkbox"> Name</label></th>
+                            <th style="width: 15%;">Type</th>
+                            <th style="width: 15%;">Status</th>
+                            <th style="width: 35%; text-align: right;">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="streams">
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Pagination Controls -->
+            <div id="pagination"
+                style="display: flex; justify-content: center; align-items: center; gap: 1.5rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                <button id="prev-page" class="secondary btn-sm" style="min-width: 100px;">&larr; Previous</button>
+                <span id="page-info" style="font-size: 0.9rem; font-weight: 500; color: var(--text-secondary);">Page 1
+                    of 1</span>
+                <button id="next-page" class="secondary btn-sm" style="min-width: 100px;">Next &rarr;</button>
             </div>
         </div>
         </div>
@@ -76,8 +197,38 @@
                     <h3 id="modal-title">Live Stream</h3>
                     <button class="close-btn" onclick="closeStreamPopup()">&times;</button>
                 </div>
-                <div class="modal-body" id="modal-body">
+                <div class="modal-body" id="modal-body" style="background: black;">
                     <!-- iframe inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Stream Modal -->
+        <div id="edit-modal" class="modal-overlay" onclick="if(event.target === this) closeEditModal()">
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3>Edit Stream</h3>
+                    <button class="close-btn" onclick="closeEditModal()">&times;</button>
+                </div>
+                <div class="modal-body" style="padding: 1.5rem 0; background: var(--bg-color);">
+                    <input type="hidden" id="edit-old-name">
+                    <div class="form-group">
+                        <label>Stream Name</label>
+                        <input type="text" id="edit-name" placeholder="e.g., front_door">
+                    </div>
+                    <div class="form-group">
+                        <label>Source URL / Command</label>
+                        <input type="text" id="edit-url" placeholder="e.g., rtsp://...">
+                    </div>
+                    <div class="form-group">
+                        <label>Camera Type</label>
+                        <select id="edit-type" required>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="secondary" onclick="closeEditModal()">Cancel</button>
+                    <button class="accent" onclick="saveStreamEdit()">Save Changes</button>
                 </div>
             </div>
         </div>
@@ -85,12 +236,12 @@
 
     <script>
         const templates = [
-            '<a href="#" onclick="openStreamPopup(\'{name}\'); return false;" class="btn-sm">Stream</a>',
-            '<button onclick="copyStreamLink(\'{name}\')" class="btn-sm secondary" style="width: 120px;">Copy HTTP</button>',
-            '<a href="links.html?src={name}" class="btn-sm secondary" style="width: 100px;">Links Info</a>',
-            '<a href="#" data-name="{name}" class="btn-sm danger">Delete</a>',
+            '<a href="#" onclick="openStreamPopup(\'{name}\'); return false;" class="action-icon" title="Live Stream"><i data-lucide="play" style="width: 30px; height: 16px;"></i></a>',
+            '<button onclick="copyStreamLink(\'{name}\')" class="btn-sm secondary" style="font-size: 0.75rem; padding: 0.3rem 0.6rem;">Copy HTTP</button>',
+            '<a href="links.html?src={name}" class="action-icon" title="Links Info"><i data-lucide="info" style="width: 30px; height: 16px;"></i></a>',
+            '<button onclick="openEditModal(\'{name}\', \'{url}\', \'{type}\')" class="action-icon warning" title="Edit Stream" style="width: 80px;">Edit</button>',
+            '<button onclick="deleteStream(\'{name}\')" class="action-icon danger" title="Delete Stream" style="width: 80px;">Delete</button>',
         ];
-
         document.head.innerHTML += `
     <style>
         .btn-sm {
@@ -115,6 +266,15 @@
             border: 1px solid rgba(248, 81, 73, 0.2);
         }
         .btn-sm.danger:hover {
+            background: var(--danger);
+            color: white;
+        }
+        button.danger {
+            background: rgba(248, 81, 73, 0.05);
+            color: var(--danger);
+            border: 1px solid rgba(248, 81, 73, 0.2);
+        }
+        button.danger:hover {
             background: var(--danger);
             color: white;
         }
@@ -169,12 +329,16 @@
             background: var(--bg-color);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            width: 90%;
-            max-width: 900px;
+            width: 95%;
+            max-width: 1400px;
             overflow: hidden;
             box-shadow: 0 10px 40px rgba(0,0,0,0.5);
             transform: translateY(20px);
             transition: transform 0.2s ease;
+        }
+        .modal-content.full {
+            width: 98%;
+            max-width: 98%;
         }
         .modal-overlay.active .modal-content {
             transform: translateY(0);
@@ -206,43 +370,47 @@
         }
         .modal-body iframe { 
             width: 100%; 
-            height: 50vh; 
-            min-height: 400px; 
+            height: 80vh; 
+            min-height: 500px; 
             border: none; 
             display: block; 
         }
     </style>
     `;
 
+        const selectedStreams = new Set();
+
         document.getElementById('multi-stream-btn')
             .addEventListener('click', () => {
                 const url = new URL('stream.html', location.href);
 
-                const streams = document.querySelectorAll('#streams input');
-                streams.forEach(i => {
-                    if (i.checked) url.searchParams.append('src', i.name);
-                });
+                if (selectedStreams.size === 0) {
+                    alert('Please select at least one stream.');
+                    return;
+                }
 
-                if (!url.searchParams.has('src')) return;
-
-                let mode = document.querySelectorAll('.card input[type="checkbox"]:not(#selectall)');
-                mode = Array.from(mode).filter(i => i.checked && ['webrtc', 'mse', 'hls', 'mjpeg'].includes(i.name)).map(i => i.name).join(',');
-
-                window.location.href = `${url.toString()}&mode=${mode}`;
+                openStreamPopup(Array.from(selectedStreams));
             });
 
+        document.getElementById('delete-selected-btn')
+            .addEventListener('click', deleteSelectedStreams);
+
         const tbody = document.getElementById('streams');
-        tbody.addEventListener('click', async ev => {
-            if (!ev.target.classList.contains('danger')) return;
 
-            ev.preventDefault();
-
-            const src = decodeURIComponent(ev.target.dataset.name);
-
-            const message = `Confirm deletion of stream "${src}"? Type the name to perform this action.`;
-            if (prompt(message) !== src) {
-                return;
+        // Handle checkbox changes to update global selection state
+        tbody.addEventListener('change', ev => {
+            if (ev.target.type === 'checkbox' && ev.target.name) {
+                if (ev.target.checked) {
+                    selectedStreams.add(ev.target.name);
+                } else {
+                    selectedStreams.delete(ev.target.name);
+                }
             }
+        });
+        async function deleteStream(name) {
+            const src = decodeURIComponent(name);
+            const message = `Confirm deletion of stream "${src}"? Type the name to perform this action.`;
+            if (prompt(message) !== src) return;
 
             const url = new URL('api/streams', location.href);
             url.searchParams.set('src', src);
@@ -253,39 +421,92 @@
             } catch (error) {
                 console.error('Failed to delete the stream:', error);
             }
-        });
+        }
 
         document.getElementById('selectall').addEventListener('change', ev => {
             document.querySelectorAll('#streams input').forEach(el => {
                 el.checked = ev.target.checked;
+                if (ev.target.checked) {
+                    selectedStreams.add(el.name);
+                } else {
+                    selectedStreams.delete(el.name);
+                }
             });
         });
 
         const filterInput = document.getElementById('filter');
-        filterInput.addEventListener('input', () => reload());
+        let currentStreamPage = 1;
+        const itemsPerPage = 6;
+        let totalPages = 1;
+
+        filterInput.addEventListener('input', () => {
+            currentStreamPage = 1; // Reset to first page on filter change
+            reload();
+        });
+
+        document.getElementById('prev-page').addEventListener('click', () => {
+            if (currentStreamPage > 1) {
+                currentStreamPage--;
+                reload();
+            }
+        });
+
+        document.getElementById('next-page').addEventListener('click', () => {
+            if (currentStreamPage < totalPages) {
+                currentStreamPage++;
+                reload();
+            }
+        });
 
         function reload() {
             const url = new URL('api/streams', location.href);
-            const checkboxStates = {};
-            tbody.querySelectorAll('input[type="checkbox"][name]').forEach(checkbox => {
-                checkboxStates[checkbox.name] = checkbox.checked;
-            });
 
             fetch(url, { cache: 'no-cache' }).then(r => r.json()).then(data => {
-                const existingIds = Array.from(tbody.querySelectorAll('tr')).map(tr => tr.dataset['id']);
-                const fetchedIds = [];
                 const filterValue = filterInput.value.toLowerCase();
+                const totalCameras = Object.keys(data).length;
+                document.getElementById('total-cameras').querySelector('b').innerText = totalCameras;
 
-                for (const [key, value] of Object.entries(data)) {
-                    if (filterValue && !key.toLowerCase().includes(filterValue)) continue;
+                // Filter and sort entries
+                const filteredEntries = Object.entries(data).filter(([key]) => {
+                    return !filterValue || key.toLowerCase().includes(filterValue);
+                });
 
+                // Pagination logic
+                totalPages = Math.ceil(filteredEntries.length / itemsPerPage) || 1;
+                if (currentStreamPage > totalPages) currentStreamPage = totalPages;
+
+                const startIndex = (currentStreamPage - 1) * itemsPerPage;
+                const paginatedEntries = filteredEntries.slice(startIndex, startIndex + itemsPerPage);
+
+                // Update Pagination UI
+                document.getElementById('page-info').innerText = `Page ${currentStreamPage} of ${totalPages}`;
+                document.getElementById('prev-page').disabled = currentStreamPage === 1;
+                document.getElementById('next-page').disabled = currentStreamPage === totalPages;
+                document.getElementById('prev-page').style.opacity = currentStreamPage === 1 ? '0.5' : '1';
+                document.getElementById('next-page').style.opacity = currentStreamPage === totalPages ? '0.5' : '1';
+
+                const fetchedIds = [];
+                const existingIds = Array.from(tbody.querySelectorAll('tr')).map(tr => tr.dataset['id']);
+
+                for (const [key, value] of paginatedEntries) {
                     const name = key.replace(/[<">]/g, ''); // sanitize
                     fetchedIds.push(name);
 
                     let tr = tbody.querySelector(`tr[data-id="${name}"]`);
+                    const producers = value && value.producers ? value.producers : [];
                     const consumersCount = value && value.consumers ? value.consumers.length : 0;
+                    const streamType = value && value.type ? value.type : '';
+                    const streamUrl = producers.length > 0 ? producers[0].url : '';
+
                     const src = encodeURIComponent(name);
-                    const links = templates.map(link => link.replace('{name}', src)).join(' ');
+                    const encodedUrl = encodeURIComponent(streamUrl);
+                    const encodedType = encodeURIComponent(streamType);
+
+                    const links = templates.map(link =>
+                        link.replace(/{name}/g, src)
+                            .replace(/{url}/g, encodedUrl)
+                            .replace(/{type}/g, encodedType)
+                    ).join(' ');
 
                     if (!tr) {
                         tr = document.createElement('tr');
@@ -293,25 +514,54 @@
                         tbody.appendChild(tr);
                     }
 
-                    const isChecked = checkboxStates[name] ? 'checked' : '';
+                    const isChecked = selectedStreams.has(name) ? 'checked' : '';
                     const onlineHtml = consumersCount > 0
                         ? `<div class="status-badge"><span class="pulse"></span>${consumersCount} Active</div>`
                         : `<div class="status-badge offline">Idle</div>`;
 
                     tr.innerHTML =
                         `<td><label style="font-weight: 500; color: var(--text-primary);"><input type="checkbox" name="${name}" ${isChecked}>${name}</label></td>` +
+                        `<td><span style="font-size: 0.85rem; color: var(--text-secondary); opacity: 0.8;">${streamType}</span></td>` +
                         `<td>${onlineHtml}</td>` +
                         `<td style="text-align: right; display: flex; gap: 0.5rem; justify-content: flex-end;">${links}</td>`;
                 }
 
-                // Remove old rows
+                // Remove rows that are not in the current paginated view
                 existingIds.forEach(id => {
                     if (!fetchedIds.includes(id)) {
                         const trToRemove = tbody.querySelector(`tr[data-id="${id}"]`);
                         if (trToRemove) tbody.removeChild(trToRemove);
                     }
                 });
+
+                if (window.lucide) window.lucide.createIcons();
             });
+        }
+
+        async function deleteSelectedStreams() {
+            if (selectedStreams.size === 0) {
+                alert('Please select at least one stream.');
+                return;
+            }
+
+            if (!confirm(`Confirm deletion of ${selectedStreams.size} selected streams?`)) {
+                return;
+            }
+
+            const promises = Array.from(selectedStreams).map(async src => {
+                const url = new URL('api/streams', location.href);
+                url.searchParams.set('src', src);
+                return fetch(url, { method: 'DELETE' });
+            });
+
+            try {
+                await Promise.all(promises);
+                selectedStreams.clear();
+                reload();
+            } catch (error) {
+                console.error('Failed to delete some streams:', error);
+                alert('Error occurred during bulk deletion.');
+            }
         }
 
         // Auto-reload
@@ -334,16 +584,30 @@
             });
         }
 
-        function openStreamPopup(encodedName) {
-            const title = decodeURIComponent(encodedName);
+        function openStreamPopup(sources) {
+            if (!Array.isArray(sources)) sources = [sources];
+
+            const title = sources.length === 1 ? decodeURIComponent(sources[0]) : `Multiple Views (${sources.length})`;
             document.getElementById('modal-title').innerText = 'Live: ' + title;
 
             let mode = document.querySelectorAll('.card input[type="checkbox"]:not(#selectall)');
             mode = Array.from(mode).filter(i => i.checked && ['webrtc', 'mse', 'hls', 'mjpeg'].includes(i.name)).map(i => i.name).join(',');
 
             const url = new URL(`stream.html`, window.location.href);
-            url.searchParams.set('src', title); // set automatically encodes
+
+            sources.forEach(src => {
+                url.searchParams.append('src', decodeURIComponent(src));
+            });
+
             if (mode) url.searchParams.set('mode', mode);
+
+            // For multi-stream, adjust grid to max 3 per row (32% approx)
+            if (sources.length > 1) {
+                document.querySelector('.modal-content').classList.add('full');
+                url.searchParams.set('width', '32%');
+            } else {
+                document.querySelector('.modal-content').classList.remove('full');
+            }
 
             document.getElementById('modal-body').innerHTML = `<iframe src="${url.href}" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
             document.getElementById('stream-modal').classList.add('active');
@@ -352,6 +616,65 @@
         function closeStreamPopup() {
             document.getElementById('stream-modal').classList.remove('active');
             document.getElementById('modal-body').innerHTML = ''; // Clear iframe to stop playback
+        }
+
+        async function openEditModal(encodedName, encodedUrl, encodedType) {
+            const name = decodeURIComponent(encodedName);
+            const url = decodeURIComponent(encodedUrl);
+            const type = decodeURIComponent(encodedType);
+
+            document.getElementById('edit-old-name').value = name;
+            document.getElementById('edit-name').value = name;
+            document.getElementById('edit-url').value = url;
+
+            // Fetch types to populate select
+            const typeSelect = document.getElementById('edit-type');
+            try {
+                const response = await fetch('api/types');
+                const types = await response.json();
+                typeSelect.innerHTML = types.map(t => `<option value="${t.name}" ${t.name === type ? 'selected' : ''}>${t.name}</option>`).join('');
+            } catch (e) {
+                console.error('Failed to fetch types', e);
+            }
+
+            document.getElementById('edit-modal').classList.add('active');
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.remove('active');
+        }
+
+        async function saveStreamEdit() {
+            const oldName = document.getElementById('edit-old-name').value;
+            const newName = document.getElementById('edit-name').value;
+            const newUrl = document.getElementById('edit-url').value;
+            const newType = document.getElementById('edit-type').value;
+
+            if (!newName || !newUrl) {
+                alert('Name and URL are required.');
+                return;
+            }
+
+            // If name changed, delete old one FIRST
+            if (oldName !== newName) {
+                const delUrl = new URL('api/streams', location.href);
+                delUrl.searchParams.set('src', oldName);
+                await fetch(delUrl, { method: 'DELETE' });
+            }
+
+            // Save new/updated stream (PUT overwrites if name is same)
+            const putUrl = new URL('api/streams', location.href);
+            putUrl.searchParams.set('src', newUrl);
+            putUrl.searchParams.set('name', newName);
+            putUrl.searchParams.set('type', newType);
+
+            try {
+                await fetch(putUrl, { method: 'PUT' });
+                closeEditModal();
+                reload();
+            } catch (e) {
+                alert('Failed to save changes: ' + e.message);
+            }
         }
 
         reload();

@@ -59,11 +59,15 @@
                 tbody.innerHTML = '';
                 data.forEach(t => {
                     const tr = document.createElement('tr');
+                    const isProtected = t.is_protected;
                     tr.innerHTML = `
                         <td style="color: var(--text-secondary);">${t.id}</td>
-                        <td style="font-weight: 500;">${t.name}</td>
+                        <td style="font-weight: 500;">
+                            ${t.name}
+                            ${isProtected ? '<span style="font-size: 0.7rem; background: rgba(255,255,255,0.05); color: var(--text-secondary); padding: 2px 6px; border-radius: 4px; margin-left: 8px; border: 1px solid var(--border-color);">System Default</span>' : ''}
+                        </td>
                         <td style="text-align: right;">
-                            <button onclick="deleteType(${t.id}, '${t.name}')" class="btn-sm danger">Delete</button>
+                            ${!isProtected ? `<button onclick="deleteType(${t.id}, '${t.name}')" class="btn-sm danger">Delete</button>` : '<span style="color: var(--text-secondary); font-size: 0.85rem; padding-right: 0.5rem;">Protected</span>'}
                         </td>
                     `;
                     tbody.appendChild(tr);

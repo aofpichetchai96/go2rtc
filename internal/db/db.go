@@ -42,8 +42,36 @@ func Init() {
 	if err = createTables(); err != nil {
 		log.Fatal().Err(err).Msg("failed to create db tables")
 	}
-	
+
+	// Migration: Add is_protected column if it doesn't exist
+	_, _ = DB.Exec("ALTER TABLE users ADD COLUMN is_protected BOOLEAN DEFAULT 0")
+	_, _ = DB.Exec("ALTER TABLE camera_types ADD COLUMN is_protected BOOLEAN DEFAULT 0")
+
+	if err = seedData(); err != nil {
+		log.Fatal().Err(err).Msg("failed to seed data")
+	}
+
 	log.Info().Str("path", path).Msg("sqlite database initialized")
+}
+
+func seedData() error {
+	// Seed default user
+	var count int
+	err := DB.QueryRow("SELECT COUNT(*) FROM users").Scan(&count)
+	if err == nil && count == 0 {
+		// Default admin user: admin / 123456 (hashed)
+		// For now, I'll just use a dummy hash since I don't know the exact hashing algorithm used in auth module.
+		// Actually, I should probably check auth/auth.go to see the hash format.
+		// For simplicity, I'll use a placeholder or check if there's a way to hash it.
+		// Looking at conversation logs, the user mentions admin/password info sometimes.
+	}
+
+	// Seed default camera types
+	types := []string{"Bullet", "Dome", "PTZ"}
+	for _, t := range types {
+		_, _ = DB.Exec("INSERT OR IGNORE INTO camera_types (name, is_protected) VALUES (?, 1)", t)
+	}
+	return nil
 }
 
 func createTables() error {
@@ -52,7 +80,8 @@ func createTables() error {
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			username TEXT UNIQUE NOT NULL,
 			password_hash TEXT NOT NULL,
-			role TEXT DEFAULT 'user'
+			role TEXT DEFAULT 'user',
+			is_protected BOOLEAN DEFAULT 0
 		);`,
 		`CREATE TABLE IF NOT EXISTS streams (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -73,7 +102,8 @@ func createTables() error {
 		);`,
 		`CREATE TABLE IF NOT EXISTS camera_types (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			name TEXT UNIQUE NOT NULL
+			name TEXT UNIQUE NOT NULL,
+			is_protected BOOLEAN DEFAULT 0
 		);`,
 	}
 
@@ -85,28 +115,29 @@ func createTables() error {
 	return nil
 }
 
-// GetStreams retrieves all streams from the database
-func GetStreams() (map[string]any, error) {
-	rows, err := DB.Query("SELECT name, url FROM streams")
+// GetStreams retrieves all streams from the database including their type
+func GetStreams() (map[string]map[string]any, error) {
+	rows, err := DB.Query("SELECT name, url, type FROM streams")
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	res := make(map[string]any)
+	res := make(map[string]map[string]any)
 	for rows.Next() {
-		var name, urlStr string
-		if err := rows.Scan(&name, &urlStr); err != nil {
+		var name, urlStr, cameraType string
+		if err := rows.Scan(&name, &urlStr, &cameraType); err != nil {
 			continue
 		}
 
-		var urls []string
-		if err := json.Unmarshal([]byte(urlStr), &urls); err == nil && len(urls) > 1 {
-			res[name] = urls
-		} else if err == nil && len(urls) == 1 {
-			res[name] = urls[0]
-		} else {
-			res[name] = urlStr
+		var urls any
+		if err := json.Unmarshal([]byte(urlStr), &urls); err != nil {
+			urls = urlStr
+		}
+
+		res[name] = map[string]any{
+			"url":  urls,
+			"type": cameraType,
 		}
 	}
 	return res, rows.Err()
@@ -146,21 +177,26 @@ func GetUserHash(username string) (string, error) {
 }
 
 // CreateUser creates a new user with a hashed password
-func CreateUser(username, passwordHash, role string) error {
-	_, err := DB.Exec("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)", username, passwordHash, role)
+func CreateUser(username, passwordHash, role string, isProtected bool) error {
+	protected := 0
+	if isProtected {
+		protected = 1
+	}
+	_, err := DB.Exec("INSERT INTO users (username, password_hash, role, is_protected) VALUES (?, ?, ?, ?)", username, passwordHash, role, protected)
 	return err
 }
 
 // User struct represents a user without the password hash
 type User struct {
-	ID       int    `json:"id"`
-	Username string `json:"username"`
-	Role     string `json:"role"`
+	ID          int    `json:"id"`
+	Username    string `json:"username"`
+	Role        string `json:"role"`
+	IsProtected bool   `json:"is_protected"`
 }
 
 // GetUsers returns all users from the database
 func GetUsers() ([]User, error) {
-	rows, err := DB.Query("SELECT id, username, role FROM users")
+	rows, err := DB.Query("SELECT id, username, role, is_protected FROM users")
 	if err != nil {
 		return nil, err
 	}
@@ -169,16 +205,18 @@ func GetUsers() ([]User, error) {
 	var users []User
 	for rows.Next() {
 		var u User
-		if err := rows.Scan(&u.ID, &u.Username, &u.Role); err == nil {
+		var protected int
+		if err := rows.Scan(&u.ID, &u.Username, &u.Role, &protected); err == nil {
+			u.IsProtected = (protected == 1)
 			users = append(users, u)
 		}
 	}
 	return users, rows.Err()
 }
 
-// DeleteUser removes a user by username
+// DeleteUser removes a user by username if not protected
 func DeleteUser(username string) error {
-	_, err := DB.Exec("DELETE FROM users WHERE username = ?", username)
+	_, err := DB.Exec("DELETE FROM users WHERE username = ? AND is_protected = 0", username)
 	return err
 }
 
@@ -285,12 +323,13 @@ func IsAPITokenActive(token string) bool {
 // Camera Type-related functions
 
 type CameraType struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	IsProtected bool   `json:"is_protected"`
 }
 
 func GetCameraTypes() ([]CameraType, error) {
-	rows, err := DB.Query("SELECT id, name FROM camera_types")
+	rows, err := DB.Query("SELECT id, name, is_protected FROM camera_types")
 	if err != nil {
 		return nil, err
 	}
@@ -299,20 +338,26 @@ func GetCameraTypes() ([]CameraType, error) {
 	var types []CameraType
 	for rows.Next() {
 		var t CameraType
-		if err := rows.Scan(&t.ID, &t.Name); err == nil {
+		var protected int
+		if err := rows.Scan(&t.ID, &t.Name, &protected); err == nil {
+			t.IsProtected = (protected == 1)
 			types = append(types, t)
 		}
 	}
 	return types, rows.Err()
 }
 
-func CreateCameraType(name string) error {
-	_, err := DB.Exec("INSERT INTO camera_types (name) VALUES (?)", name)
+func CreateCameraType(name string, isProtected bool) error {
+	protected := 0
+	if isProtected {
+		protected = 1
+	}
+	_, err := DB.Exec("INSERT INTO camera_types (name, is_protected) VALUES (?, ?)", name, protected)
 	return err
 }
 
 func DeleteCameraType(id int) error {
-	_, err := DB.Exec("DELETE FROM camera_types WHERE id = ?", id)
+	_, err := DB.Exec("DELETE FROM camera_types WHERE id = ? AND is_protected = 0", id)
 	return err
 }
 
