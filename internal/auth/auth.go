@@ -73,6 +73,13 @@ func GenerateToken(username string) string {
 	return token
 }
 
+// GenerateRandomToken creates a random URL-safe base64 string
+func GenerateRandomToken() string {
+	b := make([]byte, 32)
+	rand.Read(b)
+	return base64.URLEncoding.EncodeToString(b)
+}
+
 // ValidateToken checks if a token is valid and returns the username
 func ValidateToken(token string) (string, bool) {
 	sessionsMu.RLock()

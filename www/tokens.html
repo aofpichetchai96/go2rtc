@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="cctv-icon.png">
+    <title>Stream-Tokens</title>
+</head>
+
+<body>
+    <script src="main.js"></script>
+
+    <main>
+        <div class="card">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+                <h1 style="margin: 0; display: flex; align-items: center; gap: 0.75rem;">
+                    <span
+                        style="width: 12px; height: 12px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 12px var(--accent);"></span>
+                    API Tokens
+                </h1>
+                <form id="add-form" style="display: flex; gap: 1rem; align-items: center;">
+                    <input type="text" name="name" placeholder="Token Name (e.g. HomeAssistant)" required
+                        style="padding: 0.5rem 1rem; font-size: 0.85rem;" autocomplete="off">
+                    <button type="submit">Generate Token</button>
+                </form>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 25%;">Name</th>
+                            <th style="width: 40%;">Token</th>
+                            <th style="width: 15%;">Status</th>
+                            <th style="width: 20%; text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tokens-table">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="info"
+            style="margin-top: 1rem; text-align: right; font-size: 0.8rem; color: var(--text-secondary); opacity: 0.7;">
+            Used for Authorized API access (e.g., adding/deleting streams and origins remotely). Keep tokens secure!
+        </div>
+    </main>
+
+    <script>
+        const tbody = document.getElementById('tokens-table');
+        const form = document.getElementById('add-form');
+
+        async function loadTokens() {
+            try {
+                const res = await fetch('api/tokens');
+                if (!res.ok) throw new Error(await res.text());
+                const data = await res.json() || [];
+
+                tbody.innerHTML = '';
+                data.forEach(t => {
+                    const tr = document.createElement('tr');
+                    const isActive = t.is_active;
+
+                    tr.innerHTML = `
+                        <td style="font-weight: 500;">${t.name}</td>
+                        <td style="font-family: monospace; color: var(--text-secondary); word-break: break-all;">${t.token}</td>
+                        <td>
+                            <label style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" onchange="toggleToken(${t.id}, this.checked)" ${isActive ? 'checked' : ''}>
+                                ${isActive ? '<span style="color: var(--accent);">Active</span>' : '<span style="color: var(--danger);">Inactive</span>'}
+                            </label>
+                        </td>
+                        <td style="text-align: right;">
+                            <button onclick="copyToken('${t.token}')" class="btn-sm secondary">Copy</button>
+                            <button onclick="deleteToken(${t.id}, '${t.name}')" class="btn-sm danger">Delete</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error(err);
+                if (err.message.includes("Unauthorized")) return; // handled by main.js
+            }
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const params = new URLSearchParams();
+            for (const pair of formData) {
+                params.append(pair[0], pair[1]);
+            }
+
+            try {
+                const res = await fetch('api/tokens', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: params
+                });
+                if (!res.ok) throw new Error(await res.text());
+
+                const data = await res.json();
+                form.reset();
+                loadTokens();
+
+                // Show modal or alert with the new token
+                setTimeout(() => {
+                    alert('Token generated successfully!\\n\\n' + data.token + '\\n\\nPlease copy it now.');
+                }, 100);
+            } catch (err) {
+                alert('Failed to generate token: ' + err.message);
+            }
+        });
+
+        async function toggleToken(id, isActive) {
+            try {
+                const params = new URLSearchParams();
+                params.append('id', id);
+                params.append('is_active', isActive);
+
+                const res = await fetch('api/tokens', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: params
+                });
+                if (!res.ok) throw new Error(await res.text());
+                loadTokens();
+            } catch (err) {
+                alert('Failed to update token: ' + err.message);
+                loadTokens();
+            }
+        }
+
+        async function deleteToken(id, name) {
+            if (!confirm('Are you sure you want to delete token "' + name + '"?')) return;
+
+            try {
+                const res = await fetch('api/tokens?id=' + encodeURIComponent(id), {
+                    method: 'DELETE'
+                });
+                if (!res.ok) throw new Error(await res.text());
+                loadTokens();
+            } catch (err) {
+                alert('Failed to delete token: ' + err.message);
+            }
+        }
+
+        function copyToken(token) {
+            navigator.clipboard.writeText(token).then(() => {
+                alert('Token copied to clipboard');
+            }).catch(err => {
+                prompt('Copy this token:', token);
+            });
+        }
+
+        document.head.innerHTML += `
+        <style>
+            .btn-sm {
+                display: inline-block;
+                padding: 0.4rem 0.8rem;
+                border-radius: 6px;
+                font-size: 0.8rem;
+                font-weight: 600;
+                transition: all 0.2s ease;
+                text-decoration: none !important;
+                border: none;
+                cursor: pointer;
+                margin-left: 0.5rem;
+            }
+            .btn-sm.secondary {
+                background: rgba(255,255,255,0.05);
+                border: 1px solid var(--border-color);
+                color: var(--text-primary);
+            }
+            .btn-sm.secondary:hover {
+                background: rgba(255,255,255,0.1);
+            }
+            .btn-sm.danger {
+                background: transparent;
+                color: var(--danger);
+                border: 1px solid rgba(248, 81, 73, 0.2);
+            }
+            .btn-sm.danger:hover {
+                background: var(--danger);
+                color: white;
+            }
+        </style>
+        `;
+
+        loadTokens();
+    </script>
+</body>
+
+</html>

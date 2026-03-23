@@ -1,73 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>config - go2rtc</title>
+    <link rel="icon" type="image/png" href="cctv-icon.png">
+    <title>Stream-Config</title>
     <script src="https://unpkg.com/ace-builds@1.33.1/src-min/ace.js"></script>
     <style>
-        html, body, #config {
+        html,
+        body,
+        #config {
             height: 100%;
         }
     </style>
 </head>
+
 <body>
 
-<script src="main.js"></script>
+    <script src="main.js"></script>
 
-<main style="padding: 1rem; display: flex; flex-direction: column; height: calc(100vh - 80px); gap: 1rem;">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h1 style="margin: 0;">Configuration</h1>
-        <button id="save" style="box-shadow: 0 0 15px rgba(0, 217, 181, 0.2);">Save & Restart</button>
-    </div>
-    <div id="config-wrapper" style="flex: 1; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; background: #14191f;">
-        <div id="config" style="height: 100%;"></div>
-    </div>
-</main>
+    <main style="padding: 1rem; display: flex; flex-direction: column; height: calc(100vh - 80px); gap: 1rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h1 style="margin: 0;">Configuration</h1>
+            <button id="save" style="box-shadow: 0 0 15px rgba(0, 217, 181, 0.2);">Save & Restart</button>
+        </div>
+        <div id="config-wrapper"
+            style="flex: 1; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; background: #14191f;">
+            <div id="config" style="height: 100%;"></div>
+        </div>
+    </main>
 
-<script>
-    /* global ace */
-    ace.config.set('basePath', 'https://unpkg.com/ace-builds@1.33.1/src-min/');
-    const editor = ace.edit('config', {
-        mode: 'ace/mode/yaml',
-        theme: 'ace/theme/monokai',
-        fontSize: '14px',
-        showPrintMargin: false,
-    });
+    <script>
+        /* global ace */
+        ace.config.set('basePath', 'https://unpkg.com/ace-builds@1.33.1/src-min/');
+        const editor = ace.edit('config', {
+            mode: 'ace/mode/yaml',
+            theme: 'ace/theme/monokai',
+            fontSize: '14px',
+            showPrintMargin: false,
+        });
 
-    let dump;
+        let dump;
 
-    document.getElementById('save').addEventListener('click', async () => {
-        let r = await fetch('api/config', {cache: 'no-cache'});
-        if (r.ok && dump !== await r.text()) {
-            alert('Config was changed from another place. Refresh the page and make changes again');
-            return;
-        }
+        document.getElementById('save').addEventListener('click', async () => {
+            let r = await fetch('api/config', { cache: 'no-cache' });
+            if (r.ok && dump !== await r.text()) {
+                alert('Config was changed from another place. Refresh the page and make changes again');
+                return;
+            }
 
-        r = await fetch('api/config', {method: 'POST', body: editor.getValue()});
-        if (r.ok) {
-            alert('OK');
-            dump = editor.getValue();
-            await fetch('api/restart', {method: 'POST'});
-        } else {
-            alert(await r.text());
-        }
-    });
+            r = await fetch('api/config', { method: 'POST', body: editor.getValue() });
+            if (r.ok) {
+                alert('OK');
+                dump = editor.getValue();
+                await fetch('api/restart', { method: 'POST' });
+            } else {
+                alert(await r.text());
+            }
+        });
 
-    window.addEventListener('load', async () => {
-        const r = await fetch('api/config', {cache: 'no-cache'});
-        if (r.status === 410) {
-            alert('Config file is not set');
-        } else if (r.status === 404) {
-            editor.setValue(''); // config file not exist
-        } else if (r.ok) {
-            dump = await r.text();
-            editor.setValue(dump);
-        } else {
-            alert(`Unknown error: ${r.statusText} (${r.status})`);
-        }
-    });
-</script>
+        window.addEventListener('load', async () => {
+            const r = await fetch('api/config', { cache: 'no-cache' });
+            if (r.status === 410) {
+                alert('Config file is not set');
+            } else if (r.status === 404) {
+                editor.setValue(''); // config file not exist
+            } else if (r.ok) {
+                dump = await r.text();
+                editor.setValue(dump);
+            } else {
+                alert(`Unknown error: ${r.statusText} (${r.status})`);
+            }
+        });
+    </script>
 
 </body>
+
 </html>

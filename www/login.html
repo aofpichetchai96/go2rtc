@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - go2rtc</title>
+    <link rel="icon" type="image/png" href="cctv-icon.png">
+    <title>Stream-Login</title>
     <!-- We don't load main.js here to prevent standard navigation rendering -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -18,7 +20,7 @@
             --border-color: #30363d;
             --danger: #f85149;
         }
-        
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -28,7 +30,7 @@
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-color);
-            background-image: 
+            background-image:
                 radial-gradient(circle at top right, rgba(0, 217, 181, 0.05), transparent 40%),
                 radial-gradient(circle at bottom left, rgba(0, 217, 181, 0.02), transparent 40%);
             color: var(--text-primary);
@@ -46,7 +48,7 @@
             padding: 3rem;
             width: 100%;
             max-width: 420px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
             animation: formAppear 0.5s ease-out;
             position: relative;
             overflow: hidden;
@@ -55,7 +57,10 @@
         .login-card::before {
             content: '';
             position: absolute;
-            top: 0; left: 0; right: 0; height: 4px;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
             background: linear-gradient(90deg, var(--accent), #007663);
         }
 
@@ -113,7 +118,7 @@
         input {
             width: 100%;
             padding: 0.85rem 1rem 0.85rem 2.8rem;
-            background: rgba(0,0,0,0.2);
+            background: rgba(0, 0, 0, 0.2);
             border: 1px solid var(--border-color);
             border-radius: 12px;
             color: var(--text-primary);
@@ -126,7 +131,7 @@
             outline: none;
             border-color: var(--accent);
             box-shadow: 0 0 0 3px rgba(0, 217, 181, 0.1);
-            background: rgba(0,0,0,0.4);
+            background: rgba(0, 0, 0, 0.4);
         }
 
         button {
@@ -169,11 +174,19 @@
         }
 
         @keyframes formAppear {
-            from { opacity: 0; transform: translateY(20px) scale(0.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.98);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
     </style>
 </head>
+
 <body>
 
     <div class="login-card">
@@ -188,18 +201,20 @@
                     <label>Username</label>
                     <div class="input-with-icon">
                         <i data-lucide="user"></i>
-                        <input type="text" id="username" name="username" placeholder="admin" required autocomplete="username" autofocus>
+                        <input type="text" id="username" name="username" placeholder="admin" required
+                            autocomplete="username" autofocus>
                     </div>
                 </div>
                 <div class="input-wrapper">
                     <label>Password</label>
                     <div class="input-with-icon">
                         <i data-lucide="lock"></i>
-                        <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password">
+                        <input type="password" id="password" name="password" placeholder="••••••••" required
+                            autocomplete="current-password">
                     </div>
                 </div>
             </div>
-            
+
             <button type="submit">
                 <span>Sign In</span>
                 <i data-lucide="arrow-right" style="width: 18px;"></i>
@@ -214,7 +229,7 @@
             ev.preventDefault();
             const btn = ev.target.querySelector('button');
             const errDiv = document.getElementById('error-container');
-            
+
             btn.innerHTML = '<span class="loader"></span> Signing in...';
             btn.style.opacity = '0.8';
             btn.disabled = true;
@@ -240,7 +255,7 @@
                         return; // do not restore button
                     }
                 }
-                
+
                 errDiv.innerText = 'Invalid username or password';
                 errDiv.style.display = 'block';
             } catch (e) {
@@ -255,4 +270,5 @@
         });
     </script>
 </body>
+
 </html>

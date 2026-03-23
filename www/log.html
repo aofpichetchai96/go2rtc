@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>log - go2rtc</title>
+    <link rel="icon" type="image/png" href="cctv-icon.png">
+    <title>Stream-Log</title>
     <style>
-        main > div {
+        main>div {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
@@ -36,39 +38,41 @@
         }
     </style>
 </head>
+
 <body>
 
-<script src="main.js"></script>
+    <script src="main.js"></script>
 
-<main>
-    <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
-            <h1 style="margin: 0;">System Logs</h1>
-            <div style="display: flex; gap: 0.75rem;">
-                <button id="clean" class="danger btn-sm">Clean</button>
-                <button id="update" class="secondary btn-sm">Auto Update: ON</button>
-                <button id="reverse" class="secondary btn-sm">Reverse: OFF</button>
+    <main>
+        <div class="card">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+                <h1 style="margin: 0;">System Logs</h1>
+                <div style="display: flex; gap: 0.75rem;">
+                    <button id="clean" class="danger btn-sm">Clean</button>
+                    <button id="update" class="secondary btn-sm">Auto Update: ON</button>
+                    <button id="reverse" class="secondary btn-sm">Reverse: OFF</button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 140px">Time</th>
+                            <th style="width: 100px">Level</th>
+                            <th>Message</th>
+                        </tr>
+                    </thead>
+                    <tbody id="log">
+                    </tbody>
+                </table>
             </div>
         </div>
+    </main>
 
-        <div class="table-container">
-            <table>
-                <thead>
-                <tr>
-                    <th style="width: 140px">Time</th>
-                    <th style="width: 100px">Level</th>
-                    <th>Message</th>
-                </tr>
-                </thead>
-                <tbody id="log">
-                </tbody>
-            </table>
-        </div>
-    </div>
-</main>
-
-<script>
-    document.head.innerHTML += `
+    <script>
+        document.head.innerHTML += `
     <style>
         .trace { color: var(--text-secondary); opacity: 0.6; }
         .debug { color: var(--text-secondary); }
@@ -96,88 +100,89 @@
     </style>
     `;
 
-    document.getElementById('clean').addEventListener('click', async () => {
-        if (!confirm('Clean all logs?')) return;
-        const r = await fetch('api/log', {method: 'DELETE'});
-        if (r.ok) reload();
-    });
+        document.getElementById('clean').addEventListener('click', async () => {
+            if (!confirm('Clean all logs?')) return;
+            const r = await fetch('api/log', { method: 'DELETE' });
+            if (r.ok) reload();
+        });
 
-    // Sanitizes the input text to prevent XSS
-    function escapeHTML(text) {
-        return text
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;')
-            .replace(/\n/g, '<br>');
-    }
-
-    const reverseBtn = document.getElementById('reverse');
-    const update = document.getElementById('update');
-
-    let reverseOrder = false;
-    let autoUpdateEnabled = true;
-
-    function applyLogStyling(jsonlines) {
-        const KEYS = ['time', 'level', 'message'];
-        let lines = [];
-        try {
-            lines = JSON.parse('[' + jsonlines.trimEnd().replaceAll('\n', ',') + ']');
-        } catch(e) { return ''; }
-
-        if (reverseOrder) {
-            lines = lines.reverse();
+        // Sanitizes the input text to prevent XSS
+        function escapeHTML(text) {
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;')
+                .replace(/\n/g, '<br>');
         }
-        return lines.map(line => {
-            const date = new Date(line['time']);
-            const ts = date.toLocaleTimeString(undefined, {
-                hour12: false,
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-            }) + '.' + date.getMilliseconds().toString().padStart(3, '0');
 
-            const msg = Object.keys(line).reduce((msg, key) => {
-                return KEYS.indexOf(key) < 0 ? `${msg} <span style="color:var(--accent)">${key}=${line[key]}</span>` : msg;
-            }, line['message']);
+        const reverseBtn = document.getElementById('reverse');
+        const update = document.getElementById('update');
 
-            return `<tr class="${line['level']}">
+        let reverseOrder = false;
+        let autoUpdateEnabled = true;
+
+        function applyLogStyling(jsonlines) {
+            const KEYS = ['time', 'level', 'message'];
+            let lines = [];
+            try {
+                lines = JSON.parse('[' + jsonlines.trimEnd().replaceAll('\n', ',') + ']');
+            } catch (e) { return ''; }
+
+            if (reverseOrder) {
+                lines = lines.reverse();
+            }
+            return lines.map(line => {
+                const date = new Date(line['time']);
+                const ts = date.toLocaleTimeString(undefined, {
+                    hour12: false,
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                }) + '.' + date.getMilliseconds().toString().padStart(3, '0');
+
+                const msg = Object.keys(line).reduce((msg, key) => {
+                    return KEYS.indexOf(key) < 0 ? `${msg} <span style="color:var(--accent)">${key}=${line[key]}</span>` : msg;
+                }, line['message']);
+
+                return `<tr class="${line['level']}">
                 <td style="white-space:nowrap; opacity:0.7">${ts}</td>
                 <td><span class="lvl-badge">${line['level']}</span></td>
                 <td style="word-break: break-all;">${escapeHTML(msg)}</td>
             </tr>`;
-        }).join('');
-    }
+            }).join('');
+        }
 
-    function reload() {
-        const url = new URL('api/log', location.href);
-        fetch(url, {cache: 'no-cache'})
-            .then(response => response.text())
-            .then(data => {
-                document.getElementById('log').innerHTML = applyLogStyling(data);
-            })
-            .catch(error => console.error('An error occurred:', error));
-    }
+        function reload() {
+            const url = new URL('api/log', location.href);
+            fetch(url, { cache: 'no-cache' })
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('log').innerHTML = applyLogStyling(data);
+                })
+                .catch(error => console.error('An error occurred:', error));
+        }
 
-    reload();
-
-    update.addEventListener('click', () => {
-        autoUpdateEnabled = !autoUpdateEnabled;
-        update.textContent = `Auto Update: ${autoUpdateEnabled ? 'ON' : 'OFF'}`;
-        update.classList.toggle('secondary', autoUpdateEnabled);
-    });
-
-    reverseBtn.addEventListener('click', () => {
-        reverseOrder = !reverseOrder;
-        reverseBtn.textContent = `Reverse: ${reverseOrder ? 'ON' : 'OFF'}`;
         reload();
-    });
 
-    setInterval(() => {
-        if (autoUpdateEnabled) reload();
-    }, 5000);
-</script>
+        update.addEventListener('click', () => {
+            autoUpdateEnabled = !autoUpdateEnabled;
+            update.textContent = `Auto Update: ${autoUpdateEnabled ? 'ON' : 'OFF'}`;
+            update.classList.toggle('secondary', autoUpdateEnabled);
+        });
+
+        reverseBtn.addEventListener('click', () => {
+            reverseOrder = !reverseOrder;
+            reverseBtn.textContent = `Reverse: ${reverseOrder ? 'ON' : 'OFF'}`;
+            reload();
+        });
+
+        setInterval(() => {
+            if (autoUpdateEnabled) reload();
+        }, 5000);
+    </script>
 
 </body>
+
 </html>

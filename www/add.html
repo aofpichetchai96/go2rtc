@@ -1,151 +1,180 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>add - go2rtc</title>
+    <link rel="icon" type="image/png" href="cctv-icon.png">
+    <title>Stream-Add</title>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
+
 <body>
 
-<script src="main.js"></script>
+    <script src="main.js"></script>
 
-<main>
-    <div style="display: flex; flex-direction: column; gap: 2.5rem;">
-        <!-- Header -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
-            <div>
-                <h1 style="margin: 0; font-size: 2rem; letter-spacing: -0.02em;">Add New Stream</h1>
-                <p style="color: var(--text-secondary); margin: 0.5rem 0 0 0;">Manual configuration or automatic device discovery</p>
-            </div>
-            <button id="btn-back" class="secondary" style="display: none; padding: 0.5rem 1rem; font-size: 0.85rem;">← Back to Categories</button>
-        </div>
-
-        <!-- Quick Add Section -->
-        <div id="quick-add-container" class="card" style="background: linear-gradient(135deg, rgba(0, 217, 181, 0.05) 0%, rgba(0,0,0,0) 100%); border-color: rgba(0, 217, 181, 0.2);">
-            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
-                <i data-lucide="zap" style="color: var(--accent); width: 20px;"></i>
-                <h2 style="margin: 0; font-size: 1.1rem;">Quick Add</h2>
-            </div>
-            <form id="stream-form" class="form-group" style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end;">
-                <div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 0.5rem;">
-                    <label style="font-weight: 500;">Stream Name</label>
-                    <input type="text" name="name" placeholder="e.g. front-door" style="width: 100%;">
+    <main>
+        <div style="display: flex; flex-direction: column; gap: 2.5rem;">
+            <!-- Header -->
+            <div
+                style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h1 style="margin: 0; font-size: 2rem; letter-spacing: -0.02em;">Add New Stream</h1>
+                    <p style="color: var(--text-secondary); margin: 0.5rem 0 0 0;">Manual configuration or automatic
+                        device discovery</p>
                 </div>
-                <div style="flex: 2; min-width: 300px; display: flex; flex-direction: column; gap: 0.5rem;">
-                    <label style="font-weight: 500;">Source URL / Command</label>
-                    <input type="text" name="src" placeholder="rtsp://user:pass@192.168.1.10..." required style="width: 100%;">
+                <button id="btn-back" class="secondary"
+                    style="display: none; padding: 0.5rem 1rem; font-size: 0.85rem;">← Back to Categories</button>
+            </div>
+
+            <!-- Quick Add Section -->
+            <div id="quick-add-container" class="card"
+                style="background: linear-gradient(135deg, rgba(0, 217, 181, 0.05) 0%, rgba(0,0,0,0) 100%); border-color: rgba(0, 217, 181, 0.2);">
+                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+                    <i data-lucide="zap" style="color: var(--accent); width: 20px;"></i>
+                    <h2 style="margin: 0; font-size: 1.1rem;">Quick Add</h2>
                 </div>
-                <button type="submit" style="height: 48px; min-width: 120px;">Add Stream</button>
-            </form>
-        </div>
-
-        <!-- Categories Grid -->
-        <div id="categories-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem;">
-            <div class="category-card" data-section="section-onvif">
-                <div class="icon-circle"><i data-lucide="search"></i></div>
-                <h3>ONVIF Scan</h3>
-                <p>Discover cameras on your local network automatically</p>
-            </div>
-            <div class="category-card" data-section="section-hardware">
-                <div class="icon-circle"><i data-lucide="camera"></i></div>
-                <h3>Local Devices</h3>
-                <p>USB Webcams (V4L2) and Audio Inputs (ALSA)</p>
-            </div>
-            <div class="category-card" data-section="section-hass">
-                <div class="icon-circle"><i data-lucide="home"></i></div>
-                <h3>Integrations</h3>
-                <p>Home Assistant, HomeKit, and Nest devices</p>
-            </div>
-            <div class="category-card" data-section="section-cloud">
-                <div class="icon-circle"><i data-lucide="cloud"></i></div>
-                <h3>Other Sources</h3>
-                <p>Tuya, Ring, Roborock, and more services</p>
-            </div>
-        </div>
-
-        <!-- Discovery Panel (Hidden by default) -->
-        <div id="discovery-panel" class="card" style="display: none; animation: slideUp 0.3s ease-out;">
-            <div id="panel-content">
-                <!-- Dynamic content based on category -->
-                <div id="section-onvif" class="discovery-section" style="display: none;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem;">
-                        <div>
-                            <h2 style="margin: 0;">ONVIF Discovery</h2>
-                            <p style="color: var(--text-secondary); font-size: 0.9rem;">Scan for ONVIF compatible cameras</p>
-                        </div>
-                        <form id="onvif-form" style="display: flex; gap: 0.5rem;">
-                            <input type="text" name="src" placeholder="Optional URL override" style="width: 250px;">
-                            <button type="submit">Scan</button>
-                        </form>
+                <form id="stream-form" class="form-group"
+                    style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end;">
+                    <div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="font-weight: 500;">Stream Name</label>
+                        <input type="text" name="name" placeholder="e.g. front-door" style="width: 100%;">
                     </div>
-                    <div id="onvif-table" class="table-container"></div>
-                </div>
-
-                <div id="section-hardware" class="discovery-section" style="display: none;">
-                    <h2 style="margin-bottom: 0.5rem;">Local Hardware</h2>
-                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">Available media devices on this server</p>
-                    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
-                        <button class="secondary reload-btn" data-type="v4l2">V4L2 (Video)</button>
-                        <button class="secondary reload-btn" data-type="alsa">ALSA (Audio)</button>
-                        <button class="secondary reload-btn" data-type="ffmpeg/hardware">FFmpeg Engine</button>
+                    <div style="flex: 2; min-width: 300px; display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="font-weight: 500;">Source URL / Command</label>
+                        <input type="text" name="src" placeholder="rtsp://user:pass@192.168.1.10..." required
+                            style="width: 100%;">
                     </div>
-                    <div id="hardware-table" class="table-container"></div>
-                </div>
+                    <div style="flex: 1; min-width: 150px; display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="font-weight: 500;">Camera Type</label>
+                        <select id="camera-type-select" name="type"
+                            style="width: 100%; height: 48px; background-color: rgba(0, 0, 0, 0.2); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px;">
+                            <option value="">Default</option>
+                        </select>
+                    </div>
+                    <button type="submit" style="height: 48px; min-width: 120px;">Add Stream</button>
+                </form>
+            </div>
 
-                <div id="section-hass" class="discovery-section" style="display: none;">
-                    <h2 style="margin-bottom: 0.5rem;">Smart Home Integrations</h2>
-                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 2rem;">Sync with other platforms</p>
-                    
-                    <div style="display: flex; flex-direction: column; gap: 2rem;">
-                        <div style="background: rgba(255,255,255,0.02); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                                <h3 style="margin: 0; font-size: 1rem;">Home Assistant</h3>
-                                <button class="secondary reload-btn btn-sm" data-type="hass">Fetch Streams</button>
+            <!-- Categories Grid -->
+            <div id="categories-grid"
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem;">
+                <div class="category-card" data-section="section-onvif">
+                    <div class="icon-circle"><i data-lucide="search"></i></div>
+                    <h3>ONVIF Scan</h3>
+                    <p>Discover cameras on your local network automatically</p>
+                </div>
+                <div class="category-card" data-section="section-hardware">
+                    <div class="icon-circle"><i data-lucide="camera"></i></div>
+                    <h3>Local Devices</h3>
+                    <p>USB Webcams (V4L2) and Audio Inputs (ALSA)</p>
+                </div>
+                <div class="category-card" data-section="section-hass">
+                    <div class="icon-circle"><i data-lucide="home"></i></div>
+                    <h3>Integrations</h3>
+                    <p>Home Assistant, HomeKit, and Nest devices</p>
+                </div>
+                <div class="category-card" data-section="section-cloud">
+                    <div class="icon-circle"><i data-lucide="cloud"></i></div>
+                    <h3>Other Sources</h3>
+                    <p>Tuya, Ring, Roborock, and more services</p>
+                </div>
+            </div>
+
+            <!-- Discovery Panel (Hidden by default) -->
+            <div id="discovery-panel" class="card" style="display: none; animation: slideUp 0.3s ease-out;">
+                <div id="panel-content">
+                    <!-- Dynamic content based on category -->
+                    <div id="section-onvif" class="discovery-section" style="display: none;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem;">
+                            <div>
+                                <h2 style="margin: 0;">ONVIF Discovery</h2>
+                                <p style="color: var(--text-secondary); font-size: 0.9rem;">Scan for ONVIF compatible
+                                    cameras</p>
                             </div>
-                            <div id="hass-table" class="table-container"></div>
+                            <form id="onvif-form" style="display: flex; gap: 0.5rem;">
+                                <input type="text" name="src" placeholder="Optional URL override" style="width: 250px;">
+                                <button type="submit">Scan</button>
+                            </form>
                         </div>
+                        <div id="onvif-table" class="table-container"></div>
+                    </div>
 
-                        <div style="background: rgba(255,255,255,0.02); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
-                            <h3 style="margin: 0 0 1rem 0; font-size: 1rem;">HomeKit Pairing</h3>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
-                                <form id="homekit-pair" style="display: flex; flex-direction: column; gap: 0.75rem;">
-                                    <input type="text" name="id" placeholder="Stream ID" required>
-                                    <input type="text" name="src" placeholder="Source URL" required>
-                                    <input type="text" name="pin" placeholder="PIN (XXX-XX-XXX)" required>
-                                    <button type="submit">Pair</button>
-                                </form>
-                                <form id="homekit-unpair" style="display: flex; flex-direction: column; gap: 0.75rem;">
-                                    <input type="text" name="id" placeholder="Stream ID" required>
-                                    <button type="submit" class="danger secondary">Unpair</button>
-                                </form>
+                    <div id="section-hardware" class="discovery-section" style="display: none;">
+                        <h2 style="margin-bottom: 0.5rem;">Local Hardware</h2>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">Available
+                            media devices on this server</p>
+                        <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+                            <button class="secondary reload-btn" data-type="v4l2">V4L2 (Video)</button>
+                            <button class="secondary reload-btn" data-type="alsa">ALSA (Audio)</button>
+                            <button class="secondary reload-btn" data-type="ffmpeg/hardware">FFmpeg Engine</button>
+                        </div>
+                        <div id="hardware-table" class="table-container"></div>
+                    </div>
+
+                    <div id="section-hass" class="discovery-section" style="display: none;">
+                        <h2 style="margin-bottom: 0.5rem;">Smart Home Integrations</h2>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 2rem;">Sync with other
+                            platforms</p>
+
+                        <div style="display: flex; flex-direction: column; gap: 2rem;">
+                            <div
+                                style="background: rgba(255,255,255,0.02); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                    <h3 style="margin: 0; font-size: 1rem;">Home Assistant</h3>
+                                    <button class="secondary reload-btn btn-sm" data-type="hass">Fetch Streams</button>
+                                </div>
+                                <div id="hass-table" class="table-container"></div>
                             </div>
-                            <div id="homekit-table" class="table-container" style="margin-top: 1rem;"></div>
+
+                            <div
+                                style="background: rgba(255,255,255,0.02); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                                <h3 style="margin: 0 0 1rem 0; font-size: 1rem;">HomeKit Pairing</h3>
+                                <div
+                                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                                    <form id="homekit-pair"
+                                        style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                        <input type="text" name="id" placeholder="Stream ID" required>
+                                        <input type="text" name="src" placeholder="Source URL" required>
+                                        <input type="text" name="pin" placeholder="PIN (XXX-XX-XXX)" required>
+                                        <button type="submit">Pair</button>
+                                    </form>
+                                    <form id="homekit-unpair"
+                                        style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                        <input type="text" name="id" placeholder="Stream ID" required>
+                                        <button type="submit" class="danger secondary">Unpair</button>
+                                    </form>
+                                </div>
+                                <div id="homekit-table" class="table-container" style="margin-top: 1rem;"></div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div id="section-cloud" class="discovery-section" style="display: none;">
-                    <h2 style="margin-bottom: 0.5rem;">Cloud & Proprietary Services</h2>
-                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">Login to 3rd party video services</p>
-                    <div style="display: grid; grid-template-columns: repeat(auto-all, minmax(140px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
-                        <button class="secondary reload-btn" data-type="dvrip">DVRIP</button>
-                        <button class="secondary reload-btn" data-type="gopro">GoPro</button>
-                        <button class="secondary reload-btn" data-type="tuya">Tuya</button>
-                        <button class="secondary reload-btn" data-type="nest">Nest</button>
-                        <button class="secondary reload-btn" data-type="ring">Ring</button>
-                        <button class="secondary reload-btn" data-type="roborock">Roborock</button>
+                    <div id="section-cloud" class="discovery-section" style="display: none;">
+                        <h2 style="margin-bottom: 0.5rem;">Cloud & Proprietary Services</h2>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">Login to 3rd
+                            party video services</p>
+                        <div
+                            style="display: grid; grid-template-columns: repeat(auto-all, minmax(140px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
+                            <button class="secondary reload-btn" data-type="dvrip">DVRIP</button>
+                            <button class="secondary reload-btn" data-type="gopro">GoPro</button>
+                            <button class="secondary reload-btn" data-type="tuya">Tuya</button>
+                            <button class="secondary reload-btn" data-type="nest">Nest</button>
+                            <button class="secondary reload-btn" data-type="ring">Ring</button>
+                            <button class="secondary reload-btn" data-type="roborock">Roborock</button>
+                        </div>
+                        <div id="cloud-table" class="table-container"></div>
                     </div>
-                    <div id="cloud-table" class="table-container"></div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <script>
-        // Design Styles
-        document.head.innerHTML += `
+        <script>
+            // Design Styles
+            document.head.innerHTML += `
         <style>
             .category-card {
                 background: var(--card-bg);
@@ -213,119 +242,138 @@
         </style>
         `;
 
-        // Logic
-        lucide.createIcons();
+            // Logic
+            lucide.createIcons();
 
-        const grid = document.getElementById('categories-grid');
-        const panel = document.getElementById('discovery-panel');
-        const quickAdd = document.getElementById('quick-add-container');
-        const btnBack = document.getElementById('btn-back');
+            const grid = document.getElementById('categories-grid');
+            const panel = document.getElementById('discovery-panel');
+            const quickAdd = document.getElementById('quick-add-container');
+            const btnBack = document.getElementById('btn-back');
 
-        grid.addEventListener('click', ev => {
-            const card = ev.target.closest('.category-card');
-            if (!card) return;
+            grid.addEventListener('click', ev => {
+                const card = ev.target.closest('.category-card');
+                if (!card) return;
 
-            const sectionId = card.dataset.section;
-            
-            // Hide everything else
-            grid.style.display = 'none';
-            quickAdd.style.display = 'none';
-            btnBack.style.display = 'block';
-            panel.style.display = 'block';
+                const sectionId = card.dataset.section;
 
-            document.querySelectorAll('.discovery-section').forEach(s => s.style.display = 'none');
-            const targetContent = document.getElementById(sectionId);
-            if (targetContent) targetContent.style.display = 'block';
-            
-            // Auto reload for some specific ones
-            if (sectionId === 'section-onvif') document.querySelector('#onvif-form button').click();
-        });
+                // Hide everything else
+                grid.style.display = 'none';
+                quickAdd.style.display = 'none';
+                btnBack.style.display = 'block';
+                panel.style.display = 'block';
 
-        btnBack.addEventListener('click', () => {
-            grid.style.display = 'grid';
-            quickAdd.style.display = 'block';
-            btnBack.style.display = 'none';
-            panel.style.display = 'none';
-        });
+                document.querySelectorAll('.discovery-section').forEach(s => s.style.display = 'none');
+                const targetContent = document.getElementById(sectionId);
+                if (targetContent) targetContent.style.display = 'block';
 
-        // Table logic
-        function drawTable(table, data) {
-            if (!data || !data.sources || data.sources.length === 0) {
-                table.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--text-secondary);">No compatible devices found in this category</div>';
-                return;
-            }
-            const cols = ['id', 'name', 'type', 'url', 'location'];
-            const sortedCols = cols.filter(k => k in data.sources[0]);
-            
-            const th = '<thead><tr>' + sortedCols.map(k => `<th>${k}</th>`).join('') + '<th style="text-align:right;">Action</th></tr></thead>';
-            const tbody = '<tbody>' + data.sources.map(source => {
-                const url = source.url || source.id || '';
-                return '<tr>' + sortedCols.map(k => `<td>${source[k]}</td>`).join('') + `<td style="text-align:right;"><button class="btn-sm-add" data-url="${url}">Add</button></td></tr>`;
-            }).join('') + '</tbody>';
+                // Auto reload for some specific ones
+                if (sectionId === 'section-onvif') document.querySelector('#onvif-form button').click();
+            });
 
-            table.innerHTML = `<table>${th}${tbody}</table>`;
-        }
+            btnBack.addEventListener('click', () => {
+                grid.style.display = 'grid';
+                quickAdd.style.display = 'block';
+                btnBack.style.display = 'none';
+                panel.style.display = 'none';
+            });
 
-        async function getSources(tableID, url) {
-            const tableContainer = document.getElementById(tableID);
-            tableContainer.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--accent);"><div class="pulse" style="display:inline-block; margin-right:1rem;"></div>Scanning network...</div>';
-
-            try {
-                const r = typeof url === 'string' ? await fetch(url, {cache: 'no-cache'}) : url;
-                if (!r.ok) {
-                    tableContainer.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--danger);">Failed: ${await r.text()}</div>`;
+            // Table logic
+            function drawTable(table, data) {
+                if (!data || !data.sources || data.sources.length === 0) {
+                    table.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--text-secondary);">No compatible devices found in this category</div>';
                     return;
                 }
-                drawTable(tableContainer, await r.json());
-            } catch (e) {
-                tableContainer.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--danger);">Error connection refused</div>`;
+                const cols = ['id', 'name', 'type', 'url', 'location'];
+                const sortedCols = cols.filter(k => k in data.sources[0]);
+
+                const th = '<thead><tr>' + sortedCols.map(k => `<th>${k}</th>`).join('') + '<th style="text-align:right;">Action</th></tr></thead>';
+                const tbody = '<tbody>' + data.sources.map(source => {
+                    const url = source.url || source.id || '';
+                    return '<tr>' + sortedCols.map(k => `<td>${source[k]}</td>`).join('') + `<td style="text-align:right;"><button class="btn-sm-add" data-url="${url}">Add</button></td></tr>`;
+                }).join('') + '</tbody>';
+
+                table.innerHTML = `<table>${th}${tbody}</table>`;
             }
-        }
 
-        // Feature handlers
-        document.getElementById('stream-form').addEventListener('submit', async ev => {
-            ev.preventDefault();
-            const url = new URL('api/streams', location.href);
-            url.searchParams.set('name', ev.target.elements['name'].value);
-            url.searchParams.set('src', ev.target.elements['src'].value);
-            const r = await fetch(url, {method: 'PUT'});
-            if (r.ok) { alert('Stream added successfully!'); window.location.href = 'index.html'; }
-            else alert('Error: ' + await r.text());
-        });
+            async function getSources(tableID, url) {
+                const tableContainer = document.getElementById(tableID);
+                tableContainer.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--accent);"><div class="pulse" style="display:inline-block; margin-right:1rem;"></div>Scanning network...</div>';
 
-        document.getElementById('onvif-form').addEventListener('submit', async ev => {
-            ev.preventDefault();
-            const val = ev.target.elements['src'].value;
-            const url = new URL('api/onvif', location.href);
-            if (val) url.searchParams.set('src', val);
-            getSources('onvif-table', url.toString());
-        });
+                try {
+                    const r = typeof url === 'string' ? await fetch(url, { cache: 'no-cache' }) : url;
+                    if (!r.ok) {
+                        tableContainer.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--danger);">Failed: ${await r.text()}</div>`;
+                        return;
+                    }
+                    drawTable(tableContainer, await r.json());
+                } catch (e) {
+                    tableContainer.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--danger);">Error connection refused</div>`;
+                }
+            }
 
-        document.querySelectorAll('.reload-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const section = btn.closest('.discovery-section').id;
-                const tableId = section === 'section-cloud' ? 'cloud-table' : (section === 'section-hass' ? (btn.dataset.type === 'hass' ? 'hass-table' : 'homekit-table') : 'hardware-table');
-                getSources(tableId, `api/${btn.dataset.type}`);
-            });
-        });
-
-        // Add handler
-        document.addEventListener('click', async ev => {
-            if (ev.target.classList.contains('btn-sm-add')) {
-                const urlVal = ev.target.dataset.url;
-                const name = prompt('Select a name for this stream:', urlVal.split('/').pop() || 'new-stream');
-                if (!name) return;
-
+            // Feature handlers
+            document.getElementById('stream-form').addEventListener('submit', async ev => {
+                ev.preventDefault();
                 const url = new URL('api/streams', location.href);
-                url.searchParams.set('name', name);
-                url.searchParams.set('src', urlVal);
-                const r = await fetch(url, {method: 'PUT'});
-                if (r.ok) { alert('Success!'); window.location.href = 'index.html'; }
+                url.searchParams.set('name', ev.target.elements['name'].value);
+                url.searchParams.set('src', ev.target.elements['src'].value);
+                url.searchParams.set('type', ev.target.elements['type'].value);
+                const r = await fetch(url, { method: 'PUT' });
+                if (r.ok) { alert('Stream added successfully!'); window.location.href = 'index.html'; }
                 else alert('Error: ' + await r.text());
+            });
+
+            document.getElementById('onvif-form').addEventListener('submit', async ev => {
+                ev.preventDefault();
+                const val = ev.target.elements['src'].value;
+                const url = new URL('api/onvif', location.href);
+                if (val) url.searchParams.set('src', val);
+                getSources('onvif-table', url.toString());
+            });
+
+            document.querySelectorAll('.reload-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const section = btn.closest('.discovery-section').id;
+                    const tableId = section === 'section-cloud' ? 'cloud-table' : (section === 'section-hass' ? (btn.dataset.type === 'hass' ? 'hass-table' : 'homekit-table') : 'hardware-table');
+                    getSources(tableId, `api/${btn.dataset.type}`);
+                });
+            });
+
+            // Add handler
+            document.addEventListener('click', async ev => {
+                if (ev.target.classList.contains('btn-sm-add')) {
+                    const urlVal = ev.target.dataset.url;
+                    const name = prompt('Select a name for this stream:', urlVal.split('/').pop() || 'new-stream');
+                    if (!name) return;
+
+                    const url = new URL('api/streams', location.href);
+                    url.searchParams.set('name', name);
+                    url.searchParams.set('src', urlVal);
+                    const r = await fetch(url, { method: 'PUT' });
+                    if (r.ok) { alert('Success!'); window.location.href = 'index.html'; }
+                    else alert('Error: ' + await r.text());
+                }
+            });
+            // Fetch and populate camera types
+            async function loadCameraTypes() {
+                try {
+                    const res = await fetch('api/types');
+                    if (!res.ok) return;
+                    const types = await res.json() || [];
+                    const select = document.getElementById('camera-type-select');
+                    types.forEach(t => {
+                        const opt = document.createElement('option');
+                        opt.value = t.name;
+                        opt.textContent = t.name;
+                        select.appendChild(opt);
+                    });
+                } catch (err) { console.error('Failed to load types:', err); }
             }
-        });
-    </script>
-</main>
+
+            loadCameraTypes();
+        </script>
+    </main>
 
 </body>
+
 </html>

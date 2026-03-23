@@ -1,6 +1,7 @@
 document.head.innerHTML += `
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="icon" type="image/png" href="cctv-icon.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
     :root {
@@ -253,9 +254,10 @@ document.body.innerHTML = `
     <nav>
         <a href="index.html"><b>go2rtc</b></a>
         <a href="add.html" class="${currentPage === 'add.html' ? 'active' : ''}">Add</a>
-        <a href="log.html" class="${currentPage === 'log.html' ? 'active' : ''}">Log</a>
         <a href="users.html" class="${currentPage === 'users.html' ? 'active' : ''}">Users</a>
         <a href="origins.html" class="${currentPage === 'origins.html' ? 'active' : ''}">Origins</a>
+        <a href="tokens.html" class="${currentPage === 'tokens.html' ? 'active' : ''}">Tokens</a>
+        <a href="types.html" class="${currentPage === 'types.html' ? 'active' : ''}">Types</a>
         <a href="#" id="logout-btn" style="margin-left: auto; color: var(--danger);">Logout</a>
     </nav>
 </header>

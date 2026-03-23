@@ -1,71 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>links - go2rtc</title>
+    <link rel="icon" type="image/png" href="cctv-icon.png">
+    <title>Stream-links</title>
     <style>
-        div > li {
+        div>li {
             list-style-type: none;
             padding-left: 10px;
             position: relative;
         }
 
-        div > li:before {
+        div>li:before {
             content: "-";
             position: absolute;
             left: 0;
         }
     </style>
 </head>
-<<body>
 
-<script src="main.js"></script>
+<body>
 
-<main>
-    <div id="links-container" style="display: flex; flex-direction: column; gap: 2rem;">
-        <h1 id="stream-name" style="margin: 0; display: flex; align-items: center; gap: 0.75rem;"></h1>
-        <div id="links-content" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem;"></div>
-    </div>
+    <script src="main.js"></script>
 
-    <script>
-        const src = new URLSearchParams(location.search).get('src').replace(/[<">]/g, ''); // sanitize
-        document.getElementById('stream-name').innerText = `Links for: ${src}`;
-        
-        const container = document.getElementById('links-content');
+    <main>
+        <div id="links-container" style="display: flex; flex-direction: column; gap: 2rem;">
+            <h1 id="stream-name" style="margin: 0; display: flex; align-items: center; gap: 0.75rem;"></h1>
+            <div id="links-content"
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem;"></div>
+        </div>
 
-        function createCard(title, description, content) {
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.style.display = 'flex';
-            card.style.flexDirection = 'column';
-            card.style.gap = '1rem';
-            card.innerHTML = `
+        <script>
+            const src = new URLSearchParams(location.search).get('src').replace(/[<">]/g, ''); // sanitize
+            document.getElementById('stream-name').innerText = `Links for: ${src}`;
+
+            const container = document.getElementById('links-content');
+
+            function createCard(title, description, content) {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.style.display = 'flex';
+                card.style.flexDirection = 'column';
+                card.style.gap = '1rem';
+                card.innerHTML = `
                 <h2 style="font-size: 1.1rem; margin-bottom: 0.25rem;">${title}</h2>
                 <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;">${description}</p>
                 <div class="card-links" style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
                     ${content}
                 </div>
             `;
-            return card;
-        }
+                return card;
+            }
 
-        const anyCodecContent = `
+            const anyCodecContent = `
             <a href="stream.html?src=${src}" class="link-item"><span>Stream Viewer</span><small>Auto-select mode</small></a>
             <a href="api/streams?src=${src}" class="link-item"><span>Stream Info</span><small>JSON active connections</small></a>
         `;
-        container.appendChild(createCard('General', 'Works with almost any device or browser', anyCodecContent));
+            container.appendChild(createCard('General', 'Works with almost any device or browser', anyCodecContent));
 
-        const url = new URL('api', location.href);
-        fetch(url, {cache: 'no-cache'}).then(r => r.json()).then(data => {
-            let rtsp = location.host + ':8554';
-            try {
-                const host = data.host.match(/^[^:]+/)[0];
-                const port = data.rtsp.listen.match(/[0-9]+$/)[0];
-                rtsp = `${host}:${port}`;
-            } catch (e) {}
+            const url = new URL('api', location.href);
+            fetch(url, { cache: 'no-cache' }).then(r => r.json()).then(data => {
+                let rtsp = location.host + ':8554';
+                try {
+                    const host = data.host.match(/^[^:]+/)[0];
+                    const port = data.rtsp.listen.match(/[0-9]+$/)[0];
+                    rtsp = `${host}:${port}`;
+                } catch (e) { }
 
-            const rtspContent = `
+                const rtspContent = `
                 <div class="code-box">rtsp://${rtsp}/${src}</div>
                 <a href="rtsp://${rtsp}/${src}" class="link-item"><span>RTSP Default</span><small>One video, one audio</small></a>
                 <a href="rtsp://${rtsp}/${src}?mp4" class="link-item"><span>RTSP for MP4</span><small>Frigate/Hass recording</small></a>
@@ -75,26 +79,26 @@
                     <div class="code-box" style="font-size: 0.7rem;">ffplay -fflags nobuffer -flags low_delay -rtsp_transport tcp "rtsp://${rtsp}/${src}"</div>
                 </div>
             `;
-            container.appendChild(createCard('RTSP', 'For VLC, FFplay, or Network Recorders', rtspContent));
+                container.appendChild(createCard('RTSP', 'For VLC, FFplay, or Network Recorders', rtspContent));
 
-            const h26xContent = `
+                const h26xContent = `
                 <a href="stream.html?src=${src}&mode=webrtc" class="link-item"><span>WebRTC</span><small>Ultra-low latency</small></a>
                 <a href="stream.html?src=${src}&mode=mse" class="link-item"><span>MSE</span><small>Chrome/Firefox/Safari Mac</small></a>
                 <a href="api/stream.mp4?src=${src}" class="link-item"><span>H.264 MP4</span><small>Native browser playback</small></a>
                 <a href="api/stream.m3u8?src=${src}" class="link-item"><span>HLS/TS</span><small>Safari/Android Legacy</small></a>
                 <a href="api/stream.m3u8?src=${src}&mp4" class="link-item"><span>HLS/fMP4</span><small>Modern HLS</small></a>
             `;
-            container.appendChild(createCard('High Quality', 'Optimized for H264/H265 sources', h26xContent));
+                container.appendChild(createCard('High Quality', 'Optimized for H264/H265 sources', h26xContent));
 
-            const mjpegContent = `
+                const mjpegContent = `
                 <a href="stream.html?src=${src}&mode=mjpeg" class="link-item"><span>MJPEG Viewer</span><small>Low tech fallback</small></a>
                 <a href="api/stream.mjpeg?src=${src}" class="link-item"><span>MJPEG Stream</span><small>Boundary stream</small></a>
                 <a href="api/frame.jpeg?src=${src}" class="link-item"><span>Snapshot</span><small>JPEG format</small></a>
             `;
-            container.appendChild(createCard('Legacy / Low Latency', 'Simple image-based streaming', mjpegContent));
-        });
+                container.appendChild(createCard('Legacy / Low Latency', 'Simple image-based streaming', mjpegContent));
+            });
 
-        document.head.innerHTML += `
+            document.head.innerHTML += `
         <style>
             .link-item {
                 background: rgba(255,255,255,0.03);
@@ -132,69 +136,72 @@
             }
         </style>
         `;
-    </script>
+        </script>
 
-    <div id="homekit" class="card" style="display: none; margin-top: 2rem;">
-        <h2>HomeKit Integration</h2>
-    </div>
-    
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
-        <div class="card">
-            <h2>Two-way Audio / Output</h2>
-            <div style="display: flex; flex-direction: column; gap: 1rem;">
-                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                    <label><input type="radio" name="play" value="file" checked> File</label>
-                    <label><input type="radio" name="play" value="live"> Live</label>
-                    <label><input type="radio" name="play" value="text"> TTS</label>
+        <div id="homekit" class="card" style="display: none; margin-top: 2rem;">
+            <h2>HomeKit Integration</h2>
+        </div>
+
+        <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
+            <div class="card">
+                <h2>Two-way Audio / Output</h2>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <label><input type="radio" name="play" value="file" checked> File</label>
+                        <label><input type="radio" name="play" value="live"> Live</label>
+                        <label><input type="radio" name="play" value="text"> TTS</label>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input id="play-url" type="text" placeholder="Path / URL / Text" style="flex: 1;">
+                        <button id="play-send">Send</button>
+                    </div>
+                    <small style="color: var(--text-secondary);">For cameras with two-way audio support</small>
                 </div>
-                <div style="display: flex; gap: 0.5rem;">
-                    <input id="play-url" type="text" placeholder="Path / URL / Text" style="flex: 1;">
-                    <button id="play-send">Send</button>
+            </div>
+
+            <div class="card">
+                <h2>Broadcast / Publish</h2>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <small style="color: var(--text-secondary);">Relay this stream to external services (YouTube,
+                        Twitch, etc.)</small>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input id="pub-url" type="text" placeholder="RTMP(S) URL" style="flex: 1;">
+                        <button id="pub-send">Publish</button>
+                    </div>
                 </div>
-                <small style="color: var(--text-secondary);">For cameras with two-way audio support</small>
             </div>
         </div>
 
-        <div class="card">
-            <h2>Broadcast / Publish</h2>
-            <div style="display: flex; flex-direction: column; gap: 1rem;">
-                <small style="color: var(--text-secondary);">Relay this stream to external services (YouTube, Twitch, etc.)</small>
-                <div style="display: flex; gap: 0.5rem;">
-                    <input id="pub-url" type="text" placeholder="RTMP(S) URL" style="flex: 1;">
-                    <button id="pub-send">Publish</button>
-                </div>
-            </div>
-        </div>
-    </div>
+        <script>
+            // HomeKit discovery
+            fetch(`api/homekit?id=${src}`, { cache: 'no-cache' }).then(async (r) => {
+                if (!r.ok) return;
+                const div = document.querySelector('#homekit');
+                div.style.display = 'block';
+                div.innerHTML += `<div><a href="${r.url}">Config JSON</a></div>`;
+                const data = await r.json();
+                if (data.setup_code === undefined) return;
+                // ... QR logic could go here if library was present, but keeping it simple for now as it was in original
+            });
 
-    <script>
-        // HomeKit discovery
-        fetch(`api/homekit?id=${src}`, {cache: 'no-cache'}).then(async (r) => {
-            if (!r.ok) return;
-            const div = document.querySelector('#homekit');
-            div.style.display = 'block';
-            div.innerHTML += `<div><a href="${r.url}">Config JSON</a></div>`;
-            const data = await r.json();
-            if (data.setup_code === undefined) return;
-            // ... QR logic could go here if library was present, but keeping it simple for now as it was in original
-        });
+            document.getElementById('play-send').addEventListener('click', ev => {
+                const action = document.querySelector('input[name="play"]:checked').value;
+                const url = new URL('api/ffmpeg', location.href);
+                url.searchParams.set('dst', src);
+                url.searchParams.set(action, document.getElementById('play-url').value);
+                fetch(url, { method: 'POST' }).then(() => alert('Command sent'));
+            });
 
-        document.getElementById('play-send').addEventListener('click', ev => {
-            const action = document.querySelector('input[name="play"]:checked').value;
-            const url = new URL('api/ffmpeg', location.href);
-            url.searchParams.set('dst', src);
-            url.searchParams.set(action, document.getElementById('play-url').value);
-            fetch(url, {method: 'POST'}).then(() => alert('Command sent'));
-        });
-
-        document.getElementById('pub-send').addEventListener('click', ev => {
-            const url = new URL('api/streams', location.href);
-            url.searchParams.set('src', src);
-            url.searchParams.set('dst', document.getElementById('pub-url').value);
-            fetch(url, {method: 'POST'}).then(() => alert('Publish started'));
-        });
-    </script>
-</main>
+            document.getElementById('pub-send').addEventListener('click', ev => {
+                const url = new URL('api/streams', location.href);
+                url.searchParams.set('src', src);
+                url.searchParams.set('dst', document.getElementById('pub-url').value);
+                fetch(url, { method: 'POST' }).then(() => alert('Publish started'));
+            });
+        </script>
+    </main>
 
 </body>
+
 </html>

@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>go2rtc</title>
+    <link rel="icon" type="image/png" href="cctv-icon.png">
+    <title>Stream-go2rtc</title>
     <style>
         .controls {
             display: flex;
@@ -86,8 +87,8 @@
     <script>
         const templates = [
             '<a href="#" onclick="openStreamPopup(\'{name}\'); return false;" class="btn-sm">Stream</a>',
-            '<button onclick="copyStreamLink(\'{name}\')" class="btn-sm secondary">Copy Link</button>',
-            '<a href="links.html?src={name}" class="btn-sm secondary">Links</a>',
+            '<button onclick="copyStreamLink(\'{name}\')" class="btn-sm secondary" style="width: 120px;">Copy HTTP</button>',
+            '<a href="links.html?src={name}" class="btn-sm secondary" style="width: 100px;">Links Info</a>',
             '<a href="#" data-name="{name}" class="btn-sm danger">Delete</a>',
         ];
 

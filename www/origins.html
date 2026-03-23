@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Origins - go2rtc</title>
+    <link rel="icon" type="image/png" href="cctv-icon.png">
+    <title>Stream-Origins</title>
 </head>
+
 <body>
     <main>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
@@ -15,11 +18,12 @@
         </div>
 
         <p style="color: var(--text-secondary); margin-bottom: 2rem;">
-            Configure allowed domains (e.g. <code>http://localhost:3000</code> or <code>https://mywebsite.com</code>) 
+            Configure allowed domains (e.g. <code>http://localhost:3000</code> or <code>https://mywebsite.com</code>)
             that can embed public stream links. If empty, unauthorized sites will be blocked.
         </p>
 
-        <div id="add-origin-form-container" class="card" style="display: none; margin-bottom: 2rem; animation: formAppear 0.3s ease-out;">
+        <div id="add-origin-form-container" class="card"
+            style="display: none; margin-bottom: 2rem; animation: formAppear 0.3s ease-out;">
             <h3 style="margin-bottom: 1rem;">Allow New Origin</h3>
             <form id="add-origin-form" style="display: flex; gap: 1rem; align-items: flex-end;">
                 <div style="display: flex; flex-direction: column; gap: 0.5rem; flex: 1;">
@@ -73,7 +77,7 @@
                 e.preventDefault();
                 const btn = e.target.querySelector('button[type="submit"]');
                 btn.disabled = true;
-                
+
                 let originVal = document.getElementById('origin').value.trim();
                 if (originVal.endsWith('/')) {
                     originVal = originVal.slice(0, -1);
@@ -81,14 +85,14 @@
 
                 const formData = new URLSearchParams();
                 formData.append('origin', originVal);
-                
+
                 try {
                     const r = await fetch('api/origins', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                         body: formData.toString()
                     });
-                    
+
                     if (r.ok) {
                         document.getElementById('add-origin-form').reset();
                         formContainer.style.display = 'none';
@@ -111,10 +115,10 @@
                 const r = await fetch('api/origins');
                 if (!r.ok) return;
                 const origins = await r.json();
-                
+
                 const tbody = document.getElementById('origin-list');
                 tbody.innerHTML = '';
-                
+
                 if (!origins || origins.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-secondary);">No custom origins defined</td></tr>';
                     return;
@@ -139,7 +143,7 @@
 
         async function deleteOrigin(origin) {
             if (!confirm('Are you sure you want to delete ' + origin + '?')) return;
-            
+
             try {
                 const r = await fetch('api/origins?origin=' + encodeURIComponent(origin), { method: 'DELETE' });
                 if (r.ok) {
@@ -153,4 +157,5 @@
         }
     </script>
 </body>
+
 </html>

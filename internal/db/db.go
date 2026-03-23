@@ -64,6 +64,17 @@ func createTables() error {
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			origin TEXT UNIQUE NOT NULL
 		);`,
+		`CREATE TABLE IF NOT EXISTS api_tokens (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			name TEXT NOT NULL,
+			token TEXT UNIQUE NOT NULL,
+			is_active BOOLEAN DEFAULT 1,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		);`,
+		`CREATE TABLE IF NOT EXISTS camera_types (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			name TEXT UNIQUE NOT NULL
+		);`,
 	}
 
 	for _, q := range queries {
@@ -102,13 +113,13 @@ func GetStreams() (map[string]any, error) {
 }
 
 // SaveStream saves or updates a stream's configuration in the database
-func SaveStream(name string, source any) error {
+func SaveStream(name string, source any, cameraType string) error {
 	b, err := json.Marshal(source)
 	if err != nil {
 		return err
 	}
 	// Upsert query for sqlite
-	_, err = DB.Exec("INSERT INTO streams(name, url, type) VALUES(?, ?, '') ON CONFLICT(name) DO UPDATE SET url=excluded.url;", name, string(b))
+	_, err = DB.Exec("INSERT INTO streams(name, url, type) VALUES(?, ?, ?) ON CONFLICT(name) DO UPDATE SET url=excluded.url, type=excluded.type;", name, string(b), cameraType)
 	return err
 }
 
@@ -214,6 +225,95 @@ func CheckOrigin(origin string) (bool, error) {
 	var count int
 	err := DB.QueryRow("SELECT COUNT(*) FROM allowed_origins WHERE origin = ?", origin).Scan(&count)
 	return count > 0, err
+}
+
+// API Token-related functions
+
+type APIToken struct {
+	ID        int    `json:"id"`
+	Name      string `json:"name"`
+	Token     string `json:"token"`
+	IsActive  bool   `json:"is_active"`
+	CreatedAt string `json:"created_at"`
+}
+
+func GetAPITokens() ([]APIToken, error) {
+	rows, err := DB.Query("SELECT id, name, token, is_active, created_at FROM api_tokens")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tokens []APIToken
+	for rows.Next() {
+		var t APIToken
+		if err := rows.Scan(&t.ID, &t.Name, &t.Token, &t.IsActive, &t.CreatedAt); err == nil {
+			tokens = append(tokens, t)
+		}
+	}
+	return tokens, rows.Err()
+}
+
+func CreateAPIToken(name, token string) error {
+	_, err := DB.Exec("INSERT INTO api_tokens (name, token) VALUES (?, ?)", name, token)
+	return err
+}
+
+func ToggleAPIToken(id int, isActive bool) error {
+	isActiveInt := 0
+	if isActive {
+		isActiveInt = 1
+	}
+	_, err := DB.Exec("UPDATE api_tokens SET is_active = ? WHERE id = ?", isActiveInt, id)
+	return err
+}
+
+func DeleteAPIToken(id int) error {
+	_, err := DB.Exec("DELETE FROM api_tokens WHERE id = ?", id)
+	return err
+}
+
+func IsAPITokenActive(token string) bool {
+	var isActive int
+	err := DB.QueryRow("SELECT is_active FROM api_tokens WHERE token = ?", token).Scan(&isActive)
+	if err != nil {
+		return false
+	}
+	return isActive == 1
+}
+
+// Camera Type-related functions
+
+type CameraType struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+
+func GetCameraTypes() ([]CameraType, error) {
+	rows, err := DB.Query("SELECT id, name FROM camera_types")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var types []CameraType
+	for rows.Next() {
+		var t CameraType
+		if err := rows.Scan(&t.ID, &t.Name); err == nil {
+			types = append(types, t)
+		}
+	}
+	return types, rows.Err()
+}
+
+func CreateCameraType(name string) error {
+	_, err := DB.Exec("INSERT INTO camera_types (name) VALUES (?)", name)
+	return err
+}
+
+func DeleteCameraType(id int) error {
+	_, err := DB.Exec("DELETE FROM camera_types WHERE id = ?", id)
+	return err
 }
 
 // Close closes the database connection

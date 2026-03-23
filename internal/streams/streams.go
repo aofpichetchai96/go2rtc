@@ -28,7 +28,7 @@ func Init() {
 		if len(dbStreams) == 0 && len(cfg.Streams) > 0 {
 			// Migrate existing YAML streams to DB
 			for name, item := range cfg.Streams {
-				if err := db.SaveStream(name, item); err == nil {
+				if err := db.SaveStream(name, item, ""); err == nil {
 					log.Info().Str("stream", name).Msg("migrated stream to database")
 				}
 				streams[name] = NewStream(item)

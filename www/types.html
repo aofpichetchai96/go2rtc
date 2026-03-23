@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="cctv-icon.png">
+    <title>Stream-Types</title>
+</head>
+
+<body>
+    <script src="main.js"></script>
+
+    <main>
+        <div class="card">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+                <h1 style="margin: 0; display: flex; align-items: center; gap: 0.75rem;">
+                    <span
+                        style="width: 12px; height: 12px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 12px var(--accent);"></span>
+                    Camera Types
+                </h1>
+                <form id="add-form" style="display: flex; gap: 1rem; align-items: center;">
+                    <input type="text" name="name" placeholder="Type Name (e.g. PTZ, Internal)" required
+                        style="padding: 0.5rem 1rem; font-size: 0.85rem;" autocomplete="off">
+                    <button type="submit">Add Type</button>
+                </form>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 15%;">ID</th>
+                            <th style="width: 65%;">Name</th>
+                            <th style="width: 20%; text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="types-table">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="info"
+            style="margin-top: 1rem; text-align: right; font-size: 0.8rem; color: var(--text-secondary); opacity: 0.7;">
+            Categorize your cameras for better organization.
+        </div>
+    </main>
+
+    <script>
+        const tbody = document.getElementById('types-table');
+        const form = document.getElementById('add-form');
+
+        async function loadTypes() {
+            try {
+                const res = await fetch('api/types');
+                if (!res.ok) throw new Error(await res.text());
+                const data = await res.json() || [];
+
+                tbody.innerHTML = '';
+                data.forEach(t => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="color: var(--text-secondary);">${t.id}</td>
+                        <td style="font-weight: 500;">${t.name}</td>
+                        <td style="text-align: right;">
+                            <button onclick="deleteType(${t.id}, '${t.name}')" class="btn-sm danger">Delete</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const params = new URLSearchParams();
+            for (const pair of formData) {
+                params.append(pair[0], pair[1]);
+            }
+
+            try {
+                const res = await fetch('api/types', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: params
+                });
+                if (!res.ok) throw new Error(await res.text());
+
+                form.reset();
+                loadTypes();
+            } catch (err) {
+                alert('Failed to add type: ' + err.message);
+            }
+        });
+
+        async function deleteType(id, name) {
+            if (!confirm('Are you sure you want to delete camera type "' + name + '"?')) return;
+
+            try {
+                const res = await fetch('api/types?id=' + encodeURIComponent(id), {
+                    method: 'DELETE'
+                });
+                if (!res.ok) throw new Error(await res.text());
+                loadTypes();
+            } catch (err) {
+                alert('Failed to delete type: ' + err.message);
+            }
+        }
+
+        document.head.innerHTML += `
+        <style>
+            .btn-sm {
+                display: inline-block;
+                padding: 0.4rem 0.8rem;
+                border-radius: 6px;
+                font-size: 0.8rem;
+                font-weight: 600;
+                transition: all 0.2s ease;
+                text-decoration: none !important;
+                border: none;
+                cursor: pointer;
+                margin-left: 0.5rem;
+            }
+            .btn-sm.danger {
+                background: transparent;
+                color: var(--danger);
+                border: 1px solid rgba(248, 81, 73, 0.2);
+            }
+            .btn-sm.danger:hover {
+                background: var(--danger);
+                color: white;
+            }
+        </style>
+        `;
+
+        loadTypes();
+    </script>
+</body>
+
+</html>

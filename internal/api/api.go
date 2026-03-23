@@ -64,6 +64,8 @@ func Init() {
 	HandleFunc("api/logout", apiLogout)
 	HandleFunc("api/users", apiUsers)
 	HandleFunc("api/origins", apiOrigins)
+	HandleFunc("api/tokens", apiTokens)
+	HandleFunc("api/types", apiTypes)
 	HandleFunc("api/config", configHandler)
 	HandleFunc("api/exit", exitHandler)
 	HandleFunc("api/restart", restartHandler)
@@ -262,10 +264,14 @@ func middlewareAuth(localAuth bool, next http.Handler) http.Handler {
 		publicStream := path == "/stream.html" || path == "/api/ws" || path == "/api/streams" || strings.HasPrefix(path, "/api/stream.")
 
 		if !exempt {
-			// 1. Check Session Token
+			// 1. Check Session Token or API Token
 			token := auth.ExtractToken(r)
 			if token != "" {
 				if _, ok := auth.ValidateToken(token); ok {
+					next.ServeHTTP(w, r)
+					return
+				}
+				if db.IsAPITokenActive(token) {
 					next.ServeHTTP(w, r)
 					return
 				}
@@ -470,6 +476,120 @@ func apiOrigins(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err := db.DeleteOrigin(origin); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		ResponseJSON(w, map[string]string{"status": "ok"})
+
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func apiTokens(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "GET":
+		tokens, err := db.GetAPITokens()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		ResponseJSON(w, tokens)
+
+	case "POST":
+		name := r.FormValue("name")
+		if name == "" {
+			http.Error(w, "name empty", http.StatusBadRequest)
+			return
+		}
+
+		token := auth.GenerateRandomToken()
+		if err := db.CreateAPIToken(name, token); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		ResponseJSON(w, map[string]string{"status": "ok", "token": token})
+
+	case "PATCH":
+		idStr := r.URL.Query().Get("id")
+		if idStr == "" {
+			idStr = r.FormValue("id")
+		}
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			http.Error(w, "invalid id", http.StatusBadRequest)
+			return
+		}
+
+		isActiveStr := r.URL.Query().Get("is_active")
+		if isActiveStr == "" {
+			isActiveStr = r.FormValue("is_active")
+		}
+		isActive := isActiveStr == "true" || isActiveStr == "1"
+
+		if err := db.ToggleAPIToken(id, isActive); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		ResponseJSON(w, map[string]string{"status": "ok"})
+
+	case "DELETE":
+		idStr := r.URL.Query().Get("id")
+		if idStr == "" {
+			idStr = r.FormValue("id")
+		}
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			http.Error(w, "invalid id", http.StatusBadRequest)
+			return
+		}
+
+		if err := db.DeleteAPIToken(id); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		ResponseJSON(w, map[string]string{"status": "ok"})
+
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func apiTypes(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "GET":
+		types, err := db.GetCameraTypes()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		ResponseJSON(w, types)
+
+	case "POST":
+		name := r.FormValue("name")
+		if name == "" {
+			http.Error(w, "name empty", http.StatusBadRequest)
+			return
+		}
+
+		if err := db.CreateCameraType(name); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		ResponseJSON(w, map[string]string{"status": "ok"})
+
+	case "DELETE":
+		idStr := r.URL.Query().Get("id")
+		if idStr == "" {
+			idStr = r.FormValue("id")
+		}
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			http.Error(w, "invalid id", http.StatusBadRequest)
+			return
+		}
+
+		if err := db.DeleteCameraType(id); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
