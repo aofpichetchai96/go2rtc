@@ -23,29 +23,22 @@ func Init() {
 
 	log = app.GetLogger("streams")
 
+	// 1. Load streams from Database first
 	dbStreams, err := db.GetStreams()
 	if err == nil {
-		if len(dbStreams) == 0 && len(cfg.Streams) > 0 {
-			// Migrate existing YAML streams to DB
-			for name, item := range cfg.Streams {
-				if err := db.SaveStream(name, item, ""); err == nil {
-					log.Info().Str("stream", name).Msg("migrated stream to database")
-				}
-				s := NewStream(item)
-				s.Type = ""
-				streams[name] = s
-			}
-		} else {
-			// Load streams from DB
-			for name, info := range dbStreams {
-				s := NewStream(info["url"])
-				s.Type = info["type"].(string)
-				streams[name] = s
-			}
+		for name, info := range dbStreams {
+			s := NewStream(info["url"])
+			s.Type = info["type"].(string)
+			streams[name] = s
 		}
 	} else {
 		log.Warn().Err(err).Msg("failed to load streams from database")
-		for name, item := range cfg.Streams {
+	}
+
+	// 2. Load streams from YAML (only if not already in streams map)
+	// This ensures YAML streams are available but DB streams take precedence/override
+	for name, item := range cfg.Streams {
+		if _, ok := streams[name]; !ok {
 			streams[name] = NewStream(item)
 		}
 	}
