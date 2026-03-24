@@ -64,3 +64,19 @@ func TestApiSchemesNoDuplicates(t *testing.T) {
 	// Should only appear once
 	require.Equal(t, 1, count, "scheme 'duplicate' should appear exactly once")
 }
+
+func TestApiStreamsDelete(t *testing.T) {
+	// Setup: Initialize the map and fake db (if needed)
+	// Since we are testing apiStreams, we need to ensure the streams map is ready
+	streams["test1"] = &Stream{}
+
+	t.Run("DELETE request removes stream", func(t *testing.T) {
+		req := httptest.NewRequest("DELETE", "/api/streams?src=test1", nil)
+		w := httptest.NewRecorder()
+
+		apiStreams(w, req)
+
+		require.Equal(t, http.StatusOK, w.Code)
+		require.Nil(t, Get("test1"))
+	})
+}

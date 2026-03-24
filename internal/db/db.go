@@ -43,6 +43,9 @@ func Init() {
 		log.Fatal().Err(err).Msg("failed to create db tables")
 	}
 
+	// Enable WAL mode for better concurrency
+	_, _ = DB.Exec("PRAGMA journal_mode=WAL")
+
 	// Migration: Add is_protected column if it doesn't exist
 	_, _ = DB.Exec("ALTER TABLE users ADD COLUMN is_protected BOOLEAN DEFAULT 0")
 	_, _ = DB.Exec("ALTER TABLE camera_types ADD COLUMN is_protected BOOLEAN DEFAULT 0")

@@ -599,20 +599,31 @@
                 return;
             }
 
-            const promises = Array.from(selectedStreams).map(async src => {
-                const url = new URL('api/streams', location.href);
-                url.searchParams.set('src', src);
-                return fetch(url, { method: 'DELETE' });
-            });
+            const streamNames = Array.from(selectedStreams);
+            const succeeded = [];
+            const failed = [];
 
-            try {
-                await Promise.all(promises);
-                selectedStreams.clear();
-                reload();
-            } catch (error) {
-                console.error('Failed to delete some streams:', error);
-                alert('Error occurred during bulk deletion.');
+            for (const src of streamNames) {
+                try {
+                    const url = new URL('api/streams', location.href);
+                    url.searchParams.set('src', src);
+                    const response = await fetch(url, { method: 'DELETE' });
+                    if (!response.ok) {
+                        throw new Error(`Failed to delete ${src}: ${response.statusText}`);
+                    }
+                    succeeded.push(src);
+                    selectedStreams.delete(src);
+                } catch (error) {
+                    console.error('Delete failed for', src, error);
+                    failed.push(`${src}: ${error.message}`);
+                }
             }
+
+            if (failed.length > 0) {
+                alert(`Some streams could not be deleted:\n${failed.join('\n')}`);
+            }
+
+            reload();
         }
 
         // Initial load

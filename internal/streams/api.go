@@ -102,7 +102,7 @@ func apiStreams(w http.ResponseWriter, r *http.Request) {
 		}
 
 	case "DELETE":
-		delete(streams, src)
+		Delete(src)
 
 		if err := db.DeleteStream(src); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
